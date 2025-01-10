@@ -347,6 +347,7 @@ function lt_print_block($block, $options = array()) {
   }
 
   error_log("Block $basename not found in blocks_dir " . implode(", ", $dirs));
+  if (!$block_options['nowrapper']) print "</div>\n";
   $basename = $basename_prev;
   return false;
 }
