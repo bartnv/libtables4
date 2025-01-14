@@ -1352,6 +1352,9 @@ function renderCell(options, row, c, element) {
   if (options.subtables && (options.subtables[c])) {
     content = `<div class="lt-div" data-source="${options.subtables[c]}" data-sub="true">Loading subtable ${options.subtables[c]}</div>`;
   }
+  else if (options.transformation && options.transformation[c] && options.transformation[c].format) {
+    content = replaceHashes(options.transformation[c].format, row);
+  }
   else if (options.transformation && options.transformation[c] && options.transformation[c].image) {
     content = `<img src="${replaceHashes(options.transformation[c].image, row)}">`;
   }
