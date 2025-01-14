@@ -152,11 +152,20 @@ function get_selectoptions($query) {
   global $dbh;
 
   $ret = [];
-  if (!($res = $dbh->query($query))) $ret['error'] = "SQL error: " . $dbh->errorInfo()[2];
-  else {
-    $ret['items'] = $res->fetchAll(\PDO::FETCH_NUM);
-    $ret['crc'] = crc32(json_encode($ret['items'], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_PARTIAL_OUTPUT_ON_ERROR));
+  if (!($res = $dbh->prepare($query))) {
+    $ret['error'] = $dbh->errorInfo()[2];
+    return $ret;
   }
+  try { lt_bind_params($res, $query); } catch (Exception $e) {
+    $ret['error'] = $e->getMessage();
+    return $ret;
+  }
+  if (!$res->execute()) {
+    $ret['error'] = $res->errorInfo()[2];
+    return $ret;
+  }
+  $ret['items'] = $res->fetchAll(\PDO::FETCH_NUM);
+  $ret['crc'] = crc32(json_encode($ret['items'], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_PARTIAL_OUTPUT_ON_ERROR));
   return $ret;
 }
 
