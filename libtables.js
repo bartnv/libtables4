@@ -130,7 +130,7 @@ function loadOrRefreshCollection(coll, sub) {
       let attr = div.data();
       let src = attr.source;
       if (!tables[src] || !document.getElementById(src)) loadTable(div, attr, sub); // Using getElementById() because jQuery gets confused by the colon in the id
-      else refreshTable(div.find('table'), src);
+      else refreshTable(div.find('table'), src, true);
     }
     else if (div.hasClass('lt-div-text')) refreshText(div);
     else if (div.hasClass('lt-control')) {
@@ -201,7 +201,7 @@ function doAction(button, addparam) {
             window[action.functionname](data.output);
           }
         }
-        refreshTable(table, src);
+        refreshTable(table, src, true);
         if (tbl.options.trigger) loadOrRefreshCollection($('#' + tbl.options.trigger));
         // if (tbl.options.tableaction.trigger) loadOrRefreshCollection($('#' + tbl.options.tableaction.trigger));
         // if (tbl.options.tableaction.replacetext) thead.find('.lt-tableaction').val(tbl.options.tableaction.replacetext);
@@ -241,7 +241,7 @@ function doAction(button, addparam) {
           }
           else console.log(`Action for source ${src} returned output: ${data.output}`);
         }
-        refreshTable(table, src);
+        refreshTable(table, src, true);
         if (tbl.options.trigger) loadOrRefreshCollection($('#' + tbl.options.trigger));
         // else if (data.redirect) window.location = data.redirect;
         // else if (data.replace) {
@@ -349,7 +349,8 @@ function loadTable(div, attr, sub) {
   }
 }
 
-function refreshTable(table, src) {
+function refreshTable(table, src, force = false) {
+  if ((tables[src].data.options.autorefresh === false) && !force) return;
   if (tables[src].doingajax) {
     console.log(`Skipping refresh on ${src} (already in progress)`);
     return;
