@@ -597,7 +597,7 @@ function renderTableDivs(table, data, sub) {
     for (let c = 1; c < data.rows[r].length; c++) { // Loop over the columns
       if (data.options.hidecolumn && data.options.hidecolumn[c]) continue;
       if (c === data.options.classcolumn) continue;
-      items += renderCell(data.options, data.rows[r], c, 'div');
+      items += renderCell(data, data.rows[r], c, 'div');
     }
     if (data.options.appendcell) items += `<div class="lt-cell lt-append">${replaceHashes(data.options.appendcell, data.rows[r])}</div>`;
     if (data.options.rowlink) items += '</a>';
@@ -730,7 +730,7 @@ function renderTableFormatBody(tbody, data, offset) {
         while (data.options.mouseover && data.options.mouseover[colcount]) colcount++;
         for (rowspan = 1; fmt[r+rowspan] && fmt[r+rowspan][c] == '|'; rowspan++);
         for (colspan = 1; fmt[r][c+colspan] == '-'; colspan++);
-        let cell = $(renderCell(data.options, data.rows[offset], colcount));
+        let cell = $(renderCell(data, data.rows[offset], colcount));
         if (colspan > 1) cell.attr('colspan', colspan);
         if (rowspan > 1) cell.attr('rowspan', rowspan);
         row.append(cell);
@@ -1265,7 +1265,7 @@ function renderTbody(tbody, data) {
       if (rowcount <= offset) continue;
       if (data.options.limit && (offset+data.options.limit < rowcount)) continue;
       if ((rowcount == offset) && data.options.pagetitle) document.title = replaceHashes(data.options.pagetitle, data.rows[r]);
-      rows.push(renderRow(data.options, data.rows[r]));
+      rows.push(renderRow(data, data.rows[r]));
     }
   }
   tbody[0].innerHTML = rows.join('');
@@ -1273,7 +1273,8 @@ function renderTbody(tbody, data) {
   return rowcount;
 }
 
-function renderRow(options, row) {
+function renderRow(data, row) {
+  let options = data.options;
   let html = [ `<tr class="lt-row" data-rowid="${row[0]}">` ];
   if (options.selectone) {
     let trigger;
@@ -1290,7 +1291,7 @@ function renderRow(options, row) {
   for (let c = options.showid?0:1; c < row.length; c++) { // Loop over each column
     if (options.mouseover && options.mouseover[c]) continue;
     if (options.hidecolumn && options.hidecolumn[c]) continue;
-    html.push(renderCell(options, row, c));
+    html.push(renderCell(data, row, c));
   }
   if (options.appendcell) {
     if (typeof options.appendcell == 'string') html.push(`<td class="lt-cell lt-append">${replaceHashes(options.appendcell, row)}</td>`);
@@ -1309,10 +1310,12 @@ function renderRow(options, row) {
   return html.join('');
 }
 
-function renderCell(options, row, c, element) {
+function renderCell(data, row, c, element) {
+  let options = data.options;
   if (!element) element = 'td';
   let input, onclick;
   let classes = [ 'lt-cell', 'lt-data' ];
+  if (data['types'][c] == 'int8') classes.push('lt-numeric');
   if (options.class && options.class[c]) classes.push(options.class[c]);
   if (options.edit && options.edit[c]) {
     classes.push('lt-edit');
@@ -1546,7 +1549,7 @@ function updateTable(tbody, data, newrows) {
   }
   for (let i = 0; i < newrows.length; i++) { // Row added
     if (data.options.format && (i+1 != data.options.page)) continue;
-    let row = $(renderRow(data.options, newrows[i]));
+    let row = $(renderRow(data, newrows[i]));
     row.css({ 'background-color': 'green' });
     tbody.append(row);
     setTimeout(function(row) { row.css({ 'background-color': '' }); }, 1000, row);

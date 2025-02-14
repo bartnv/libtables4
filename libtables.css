@@ -1,10 +1,11 @@
 TABLE.lt-table,TD.lt-cell,TD.lt-head,TD.lt-filter { border: solid rgb(230,230,230) 1px; border-collapse: collapse; }
 TD.lt-cell,TD.lt-head,TH.lt-title { padding: 5px; }
 TH.lt-title { font-size: 14px; line-height: 1em; }
-TD.lt-head { font-weight: bold; }
+TD.lt-head { min-width: 2.5rem; font-weight: bold; }
 DIV.lt-subhead { font-weight: normal; font-size: small; }
 TR.lt-row { transition: background 2s; }
 TD.lt-cell { white-space: pre-wrap; transition: background 2s; }
+TD.lt-numeric { text-align: right; }
 TD.lt-sum { font-weight: bold; }
 TD.lt-unused { background-color: rgb(200,200,200); }
 
