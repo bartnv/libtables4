@@ -502,16 +502,15 @@ function goPage(tableId, which) {
 }
 
 function replaceHashes(str, row, returntype = false) {
-  if (str.indexOf('#') >= 0) {
-    str = str.replace(/#id/g, row[0]);
-    for (let c = row.length-1; c >= 0; c--) {
-      if (str.indexOf('#'+c) >= 0) {
-        if (returntype && (str == '#'+c)) return row[c];
-        let content;
-        if (row[c] === null) content = '';
-        else content = String(row[c]).replace('#', '\0');
-        str = str.replace(new RegExp('#'+c, 'g'), content);
-      }
+  if (str.indexOf('#') === -1) return str;
+  str = str.replace(/#id/g, row[0]);
+  for (let c = row.length-1; c >= 0; c--) {
+    if (str.indexOf('#'+c) >= 0) {
+      if (returntype && (str == '#'+c)) return row[c];
+      let content;
+      if (row[c] === null) content = '';
+      else content = String(row[c]).replace('#', '\0');
+      str = str.replace(new RegExp('#'+c, 'g'), content);
     }
   }
   return str.replace('\0', '#');
