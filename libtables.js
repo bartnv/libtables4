@@ -1315,8 +1315,8 @@ function renderCell(data, row, c, element) {
   if (!element) element = 'td';
   let input, onclick;
   let classes = [ 'lt-cell', 'lt-data' ];
-  if (data['types'][c] == 'int8') classes.push('lt-numeric');
-  if (options.class && options.class[c]) classes.push(options.class[c]);
+  if (data['types'][c].startsWith('int')) classes.push('lt-numeric');
+  if (options.class && options.class[c]) classes.push(replaceHashes(options.class[c], row));
   if (options.edit && options.edit[c]) {
     classes.push('lt-edit');
     if (typeof(options.edit[c]) == 'string') onclick = ' onclick="doEdit(this)"';
