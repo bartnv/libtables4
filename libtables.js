@@ -1902,7 +1902,7 @@ function doEdit(cell, newcontent) {
   let data = tables[cell.closest('table').attr('id')].data;
   if ((typeof data.options.emptycelltext == 'string') && (content === $('<div/>').text(data.options.emptycelltext).html())) content = '';
   if (data.options.format) c = cell.closest('tbody').find('.lt-data').index(cell)+1;
-  else c = cell.parent().children('.lt-data').index(cell)+1;
+  else c = colVisualToReal(data, cell.parent().children('.lt-data').index(cell)+1);
 
   let edit = renderEdit(data.options.edit[c], cell, typeof newcontent == 'string'?newcontent:content);
   cell.empty().append(edit);
@@ -2123,7 +2123,7 @@ function checkEdit(cell, edit, oldvalue) {
   let src = cell.closest('table').attr('id');
   let options = tables[src].data.options, c;
   if (options.format) c = cell.closest('tbody').find('.lt-data').index(cell)+1;
-  else c = cell.parent().children('.lt-data').index(cell)+1;
+  else c = colVisualToReal(tables[src].data, cell.parent().children('.lt-data').index(cell)+1);
   if (options.edit[c].type == 'checkbox') {
     if (edit.prop('checked')) {
       if (options.edit[c].truevalue) newvalue = options.edit[c].truevalue;

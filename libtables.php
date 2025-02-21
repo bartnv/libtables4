@@ -30,13 +30,8 @@ if (is_file(dirname(__FILE__) . '/local.php')) {
 
 $tables = [];
 
-function lt_setvar($name, $value, $key = null) {
-  if (!preg_match('/^[a-zA-Z][a-zA-Z0-9]*(:[-A-Za-z0-9+\/]*={0,3})?$/', $name)) throw new Exception("invalid variable name '$name' used in lt_setvar");
-  if ($key !== null) {
-    if (!is_array($value)) throw new Exception('lt_setvar used with third parameter without an array as second');
-    if (!isset($value[$key])) return;
-    $value = $value[$key];
-  }
+function lt_setvar($name, $value, $internal = false) {
+  if (!$internal && !preg_match('/^[a-zA-Z][a-zA-Z0-9]*(:[-A-Za-z0-9+\/]*={0,3})?$/', $name)) throw new Exception("invalid variable name '$name' used in lt_setvar");
   if ($value === null) unset($_SESSION[$name]);
   else $_SESSION[$name] = $value;
 }
