@@ -549,6 +549,16 @@ function refreshTable(table, src, force = false) {
           loadTable(this.parent(), this.parent().data());
           return;
         }
+        if (tables[src].data.options.showdiff === false) {
+          tables[src].data.rows = data.rows;
+          tables[src].data.crc = data.crc;
+          tables[src].data.total = data.total;
+          tables[src].data.querytime = data.querytime;
+          if (data.options?.selectany?.links) tables[src].data.options.selectany.links = data.options.selectany.links;
+          tables[src].doingajax = false;
+          renderTable(this.empty(), tables[src].data);
+          return;
+        }
 
         let tbody = this.find('tbody');
         if (!tbody.length) {
