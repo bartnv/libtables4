@@ -76,14 +76,16 @@ function appError(msg, context) {
 }
 
 function load(el, visible) {
-  let tables, controls;
+  let tables, controls, searches;
   if (visible) {
     tables = el.find('.lt-div:visible');
     controls = el.find('.lt-control:visible');
+    searches = el.find('.lt-search:visible');
   }
   else {
     tables = el.find('.lt-div');
     controls = el.find('.lt-control');
+    searches = el.find('.lt-search');
   }
 
   tables.each(function() {
@@ -93,6 +95,10 @@ function load(el, visible) {
   controls.each(function() {
     let attr = $(this).data();
     loadControl($(this), attr);
+  });
+  searches.each(function() {
+    let attr = $(this).data();
+    loadSearch($(this), attr);
   });
 }
 function refresh(root = $(document)) {
@@ -291,6 +297,171 @@ function loadControl(div, attr) {
   tables[attr.source] = {};
   tables[attr.source].div = div;
   tables[attr.source].options = options;
+}
+
+function loadSearch(div, attr) {
+  let options = JSON.parse(atob(attr.options));
+  let form = $('<div class="lt-search-form"/>');
+  let state = JSON.parse(sessionStorage.getItem('lt_search:' + attr.source) ?? '{}');
+  if (!window.lt_search) window.lt_search = {};
+  if (!window.lt_search[attr.source]) window.lt_search[attr.source] = {};
+  for (let field of options.fields) {
+    if (!field.name) {
+      console.log("Search field in " + attr.source + " has no name defined");
+      continue;
+    }
+    let label = $('<label for="' + field.name + '">' + field.label + '</label>');
+    let item;
+    if (field.prefill) window.lt_search[attr.source][field.name] = field.prefill;
+    if (field.options || field.query) {
+      if (field.display == 'radio') item = $('<div class="lt-search-form-radio" tabindex="1"/>');
+      else item = $('<select class="lt-search-form-select" name="' + field.name + '" tabindex="1"/>');
+      if (field.options) {
+        for (let option of field.options) {
+          item.append(`<option value="${option[1]}">${option[0]}</option>`);
+        }
+      }
+      if (field.query) {
+        if (field.depends) {
+          item.prop('disabled', true);
+          item.addClass('lt-search-form-depends');
+        }
+        updateSearch(div, field, item);
+      }
+      if (field.multiple) item.prop('multiple', true);
+      item.val(null);
+    }
+    else item = $('<input type="text" name="' + field.name + '" tabindex="1">');
+    if (state?.fields?.find((f) => f.name == field.name)) item.filter('input,select').val(state.fields.find((f) => f.name == field.name).value);
+    else if (field.prefill) item.filter('input').val(field.prefill);
+    if (field.placeholder) item.filter('input').prop('placeholder', field.placeholder);
+    let controls = $('<div class="lt-search-form-controls"/>');
+    if (typeof field.fullmatch === 'string') {
+      if (state?.fields?.find((f) => f.name == field.name)) field.fullmatch = (state.fields.find((f) => f.name == field.name).fullmatch?'checked':'unchecked');
+      controls.append('<input type="checkbox" tabindex="2" class="lt-search-form-fullmatch"' + (field.fullmatch=='checked'?' checked':'') + '>'
+        + (options.controls?.fullmatch ?? 'Full match'));
+    }
+    form.append(label, item, controls);
+    field.element = item;
+  }
+  let buttons = $('<div class="lt-search-form-buttons"/>');
+  buttons.append('<input type="button" class="lt-search-form-submit" tabindex="1" value="' + (options.controls?.submit ?? 'Search') + '">');
+  buttons.find('.lt-search-form-submit').on('click', doSearch);
+  if (options.controls?.clear) {
+    buttons.append('<input type="button" class="lt-search-form-clear" tabindex="1" value="' + options.controls.clear + '">');
+    buttons.find('.lt-search-form-clear').on('click', doSearchClear);
+  }
+  if (options.controls?.limit) {
+    let label = $('<label for="lt-search-limit">' + (options.controls.limit.label ?? 'Max. results') + ' </label>');
+    let input = $('<select class="lt-search-limit"/>');
+    for (let option of options.controls.limit.options) {
+      input.append('<option value="' + option + '">' + option + '</option>');
+    }
+    if (state?.limit) input.val(state.limit);
+    buttons.append(label, input);
+  }
+  form.on('input', function(evt) {
+    let field;
+    let name = evt.target.name;
+    window.lt_search[attr.source][name] = $(evt.target).val();
+    for (field of options.fields) {
+      if (field.depends && field.depends.includes(name)) {
+        field.element.prop('disabled', true);
+        updateSearch(div, field, field.element);
+      }
+    }
+    if (field.name == name) form.find('.lt-search-form-submit').click();
+  });
+  form.append(buttons);
+  div.append(form);
+  if ($.fn.select2) div.find('.lt-search-form-select').select2().on('select2:open', function () { $('.select2-search__field')[0].focus(); });
+}
+
+function updateSearch(div, field, item) {
+  let data = { name: field.name };
+  if (field.depends) {
+    for (let item of field.depends) {
+      if (!window.lt_search[div.data('source')][item] ?? null) return;
+      data['param_' + item] = window.lt_search[div.data('source')][item] ?? null;
+    }
+  }
+  $.post({
+    url: `${ajaxUrl}?tab=${tab}&mode=getsearch&src=${div.data('source')}`,
+    data: data,
+    success: function(data) {
+      if (data.error) appError(data.error, this);
+      else if (data.options) {
+        item.empty();
+        for (let option of data.options) {
+          let str;
+          let value = option[0];
+          let label = option.length == 2?option[1]:value;
+          if (item.hasClass('lt-search-form-radio')) {
+            str = `<input type="radio" id="${value}" name="${field.name}" value="${value}"${field.prefill === value?' checked':''}><label for="${value}">${label}</label><br>`;
+          }
+          else {
+            str = `<option value="${value}">${label}</option>`;
+          }
+          item.append(str);
+        }
+        if (data.options.length > 1) item.prop('selectedIndex', -1);
+        else if (item.hasClass('lt-search-form-radio')) item.find(`INPUT[name="${field.name}"]`).prop('checked', true).trigger('input');
+        else item.trigger('input');
+        if (data.options.length > 0 ) item.prop('disabled', false);
+        if ($.fn.select2 && item.hasClass('lt-search-form-select')) item.select2();
+      }
+    }
+  });
+}
+
+function doSearch() {
+  let form = $(this).closest('.lt-search-form');
+  let options = JSON.parse(atob(form.parent().data().options));
+  let data = { fields: [] };
+  for (let field of options.fields) {
+    let input = form.find('input[name=' + field.name + ']');
+    if (!input.length) input = form.find('select[name=' + field.name + ']');
+    if (input.length > 1) input = input.filter(':checked');
+    let val = input.val();
+    if (!val || !val.length) continue;
+    let content = { name: field.name, value: val };
+    let controls = input.next();
+    if (typeof field.fullmatch === 'string') content.fullmatch = controls.find('.lt-search-form-fullmatch').prop('checked');
+    data.fields.push(content);
+  }
+  let state = { fields: data.fields };
+  if (options.controls?.limit) {
+    let limit = form.find('.lt-search-limit').val();
+    if (limit) {
+      data.limit = limit;
+      state.limit = limit;
+    }
+  }
+  sessionStorage.setItem('lt_search:' + form.parent().data('source'), JSON.stringify(state));
+  $.post({
+    url: `${ajaxUrl}?tab=${tab}&mode=search&src=${form.parent().data().source}`,
+    data: data,
+    dataType: 'json',
+    success: function(data) {
+      if (data.error) { appError(data.error, this); }
+      else {
+        loadOrRefreshCollection($('#' + options.target));
+      }
+    },
+    error: function(xhr, status) { }
+  });
+}
+
+function doSearchClear() {
+  let form = $(this).closest('.lt-search-form');
+  form.find('INPUT[type=text],SELECT').not('.lt-search-limit').val('').trigger('change');
+  form.find('INPUT[type=radio]').prop('checked', false);
+  form.find('.lt-search-form-depends').prop('disabled', true);
+  let src = form.parent().data('source');
+  if (window.lt_search) window.lt_search[src] = {};
+  sessionStorage.removeItem('lt_search:' + src);
+  form.find('.lt-search-form-submit').click();
+  form.find('INPUT[type=radio]').filter('[checked]').click();
 }
 
 function loadTable(div, attr, sub) {

@@ -336,7 +336,27 @@ switch ($_GET['mode']) {
     if (empty($_POST['crc'])) fatalerr('No crc passed in mode refreshtable');
 
     $table = lt_find_table($_GET['src']);
-    $ret = lt_query($table['query']);
+    if (strpos($table['query'], 'WHERE FALSE') && !empty($_SESSION['search_' . $table['block'] . '_' . $table['tag'] . '_where'])) {
+      if (empty($_SESSION['search_' . $table['block'] . '_limit'])) $limit = '';
+      else $limit = ' LIMIT ' . $_SESSION['search_' . $table['block'] . '_limit'];
+      $ret = lt_query(
+        str_replace(
+          'WHERE FALSE',
+          'WHERE ' . $_SESSION['search_' . $table['block'] . '_' . $table['tag'] . '_where'], $table['query']
+        ) . $limit,
+        0,
+        $_SESSION['search_' . $table['block'] . '_' . $table['tag'] . '_values']
+      );
+      if ($limit && !empty($ret['rows']) && count($ret['rows']) == $_SESSION['search_' . $table['block'] . '_limit']) {
+        $ret['total'] = lt_query_single("SELECT count(*) FROM (" .
+          str_replace(
+            'WHERE FALSE',
+            'WHERE ' . $_SESSION['search_' . $table['block'] . '_' . $table['tag'] . '_where'], $table['query']
+          ) .
+        ") as sub", $_SESSION['search_' . $table['block'] . '_' . $table['tag'] . '_values']);
+      }
+    }
+    else $ret = lt_query($table['query']);
     if (isset($ret['error'])) fatalerr('Query for table ' . $table['title'] . ' in block ' . $src[0] . ' returned error: ' . $data['error']);
     if (empty($lt_settings['checksum']) || ($lt_settings['checksum'] == 'php')) $crc = crc32(json_encode($ret['rows'], JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES|JSON_PARTIAL_OUTPUT_ON_ERROR));
     elseif ($lt_settings['checksum'] == 'psql') $crc = lt_query_single("SELECT md5(string_agg(q::text, '')) FROM (" . $table['query'] . ") AS q)");
@@ -346,6 +366,68 @@ switch ($_GET['mode']) {
     if (!empty($table['options']['titlequery'])) $ret['title'] = lt_query_single($table['options']['titlequery']);
     elseif (!is_null($table['title']) && (strpos($table['title'], ':') !== false)) $ret['title'] = lt_replace_params($table['title']);
     if (!empty($table['options']['tableaction']['sqlcondition'])) $ret['options']['tableaction']['sqlcondition'] = (lt_query_count($table['options']['tableaction']['sqlcondition']) > 0);
+    break;
+  case 'getsearch':
+    if (empty($_POST['name'])) fatalerr('Invalid name in mode getsearch');
+
+    $ret = [];
+    $search = lt_find_table($_GET['src']);
+    foreach ($search['options']['fields'] as $field) {
+      if ($field['name'] == $_POST['name']) {
+        $params = [];
+        if (!empty($field['depends'])) {
+          foreach ($field['depends'] as $param) {
+            if (isset($_POST['param_'.$param])) $params[$param] = $_POST['param_'.$param];
+          }
+        }
+        if (!empty($field['query'])) $ret['options'] = lt_query_rows($field['query'], $params);
+        break;
+      }
+    }
+    if (!empty($ret['error'])) fatalerr($ret['error']);
+    break;
+  case 'search':
+    $search = lt_find_table($_GET['src']);
+    if (empty($_POST['fields'])) {
+      unset($_SESSION['search_' . $search['block'] . '_' . $search['options']['target'] . '_where']);
+      unset($_SESSION['search_' . $search['block'] . '_' . $search['options']['target'] . '_values']);
+      unset($_SESSION['search_' . $search['block'] . '_limit']);
+      $ret = [ 'status' => 'ok' ];
+      break;
+    }
+    $where = '';
+    $values = [];
+    foreach ($_POST['fields'] as $field) {
+      if (empty($field['name'])) fatalerr('No field name specified in mode search');
+      foreach ($search['options']['fields'] as $config) {
+        if ($config['name'] == $field['name']) { break; }
+        $config = null;
+      }
+      if (!$config) fatalerr('Field "' . $field['name'] . '" not found in config in mode search');
+      if (!empty($where)) $where .= ' AND ';
+      if (isset($config['multiple'])) {
+        $where .= $config['column'] . ' = ANY(:' . $field['name'] . ')';
+        $values[$field['name']] = '{' . implode(',', $field['value']) . '}';
+      }
+      elseif (isset($config['fullmatch']) && (($config['fullmatch'] === true) || ($field['fullmatch'] === 'true'))) {
+        $where .= $config['column'] . ' = :' . $field['name'];
+        $values[$field['name']] = trim($field['value']);
+      }
+      elseif (isset($config['fts']) && (($config['fts'] === true) || ($field['fts'] === 'true'))) {
+        $where .= $config['column'] . ' @@ websearch_to_tsquery(\'dutch\', :' . $field['name'] . ')';
+        $values[$field['name']] = $field['value'];
+      }
+      else {
+        $where .= $config['column'] . ' ilike :' . $field['name'];
+        $values[$field['name']] = '%' . str_replace([ "'", ' ', '.' ], '%', trim($field['value'])) . '%';
+      }
+    }
+    $_SESSION['search_' . $search['block'] . '_' . $search['options']['target'] . '_where'] = $where;
+    $_SESSION['search_' . $search['block'] . '_' . $search['options']['target'] . '_values'] = $values;
+    if (!empty($_POST['limit']) && is_numeric($_POST['limit'])) {
+      $_SESSION['search_' . $search['block'] . '_limit'] = $_POST['limit'];
+    }
+    $ret = [ 'status' => 'ok', 'where' => $where ];
     break;
   case 'refreshtext':
     $table = lt_find_table($_GET['src']);

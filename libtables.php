@@ -118,6 +118,19 @@ function _lt_table($tag, $title, $query, $options = []) {
   print $divstr . '>Loading table ' . $tag . "...</div>\n";
 }
 
+function _lt_search($tag, $options) {
+  global $basename;
+
+  if (empty($options['target'])) {
+    error_log('Libtables error: block ' . $basename . ' search ' . $tag . ' has no target defined');
+    return;
+  }
+
+  $divstr = ' <div id="' . $tag . '" class="lt-search" data-source="' . $basename . ':' . $tag . '"';
+  $divstr .= ' data-options="' . base64_encode(json_encode($options)) . '"></div>';
+  print $divstr;
+}
+
 function prepare_table($table) {
   $ret = [];
   if (is_array($table['query'])) { // Type 'insert'
@@ -127,6 +140,26 @@ function prepare_table($table) {
   elseif (isset($table['options']['export']['nopreview']) && $table['options']['export']['nopreview']) {
     $ret = lt_query($table['query'] . ' LIMIT 0');
     $ret['rowcount'] = lt_query_single('SELECT COUNT(*) FROM (' . $table['query'] . ') AS tmp');
+  }
+  elseif (strpos($table['query'], 'WHERE FALSE') && !empty($_SESSION['search_' . $table['block'] . '_' . $table['tag'] . '_where'])) {
+    if (empty($_SESSION['search_' . $table['block'] . '_limit'])) $limit = '';
+    else $limit = ' LIMIT ' . $_SESSION['search_' . $table['block'] . '_limit'];
+    $ret = lt_query(
+      str_replace(
+        'WHERE FALSE',
+        'WHERE ' . $_SESSION['search_' . $table['block'] . '_' . $table['tag'] . '_where'], $table['query']
+      ) . $limit,
+      0,
+      $_SESSION['search_' . $table['block'] . '_' . $table['tag'] . '_values']
+    );
+    if ($limit && !empty($ret['rows']) && count($ret['rows']) == $_SESSION['search_' . $table['block'] . '_limit']) {
+      $ret['total'] = lt_query_single("SELECT count(*) FROM (" .
+        str_replace(
+          'WHERE FALSE',
+          'WHERE ' . $_SESSION['search_' . $table['block'] . '_' . $table['tag'] . '_where'], $table['query']
+        ) .
+      ") as sub", $_SESSION['search_' . $table['block'] . '_' . $table['tag'] . '_values']);
+    }
   }
   else $ret = lt_query($table['query']);
   if (isset($ret['error'])) {
@@ -321,6 +354,9 @@ function lt_print_block($block, $options = array()) {
             case 'insert':
               _lt_table($item['tag'], $item['title']??null, $item['columns'], $item['options']);
               break;
+            case 'search':
+              _lt_search($item['tag'], $item['options']);
+              break;
             case 'control':
               _lt_control($item['tag'], $item['options']);
               break;
@@ -384,7 +420,7 @@ function lt_bind_params($stmt, $query, $params = []) {
   }
 }
 
-function lt_query($query, $id = 0) {
+function lt_query($query, $id = 0, $params = []) {
   global $dbh;
   $ret = array();
 
@@ -394,7 +430,7 @@ function lt_query($query, $id = 0) {
     $ret['error'] = $dbh->errorInfo()[2];
     return $ret;
   }
-  try { lt_bind_params($res, $query); } catch (Exception $e) {
+  try { lt_bind_params($res, $query, $params); } catch (Exception $e) {
     $ret['error'] = $e->getMessage();
     return $ret;
   }
@@ -504,6 +540,24 @@ function lt_query_row($query, $params = []) {
   }
   if (!($row = $res->fetch())) return null;
   return $row;
+}
+
+function lt_query_rows($query, $params = []) {
+  global $dbh;
+
+  if (!($res = $dbh->prepare($query))) {
+    error_log("Libtables error: query prepare failed: " . $dbh->errorInfo()[2]);
+    return null;
+  }
+  try { lt_bind_params($res, $query, $params); } catch (Exception $e) {
+    error_log("Libtables error: " . $e->getMessage());
+    return null;
+  }
+  if (!$res->execute()) {
+    error_log("Error: query execute failed: " . $res->errorInfo()[2]);
+    return null;
+  }
+  return $res->fetchAll(PDO::FETCH_NUM);
 }
 
 function lt_query_foreach_row($query, $function, $params = []) {
