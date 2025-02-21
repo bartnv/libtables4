@@ -268,7 +268,7 @@ function doEditInsertRuns($item, $id) {
   $lt_sqloutput = '';
   $lt_phpoutput = '';
   $lt_blockoutput = '';
-  lt_setvar('lt_id', $id);
+  lt_setvar('lt_id', $id, true);
   if (empty($item['runorder'])) $item['runorder'] = [ 'sql', 'php', 'block' ];
   foreach ($item['runorder'] as $run) {
     switch ($run) {
@@ -302,7 +302,7 @@ function doEditInsertRuns($item, $id) {
         error_log('Invalid runorder option "$run" in block ' . $_GET['src']);
     }
   }
-  lt_setvar('lt_id', NULL);
+  lt_setvar('lt_id', NULL, true);
   return $ret;
 }
 
@@ -526,7 +526,7 @@ switch ($_GET['mode']) {
         $count = 0;
         foreach ($params as $param) {
           $count++;
-          lt_setvar('lt_param' . $count, $param);
+          lt_setvar('lt_param' . $count, $param, true);
         }
       }
     }
@@ -866,7 +866,7 @@ switch ($_GET['mode']) {
       if (!empty($table['options']['fields'])) {
         foreach ($table['options']['fields'] as $field) {
           if (!empty($_POST['field_'.$field[0]])) {
-            lt_setvar('field_'.$field[0], $_POST['field_'.$field[0]]);
+            lt_setvar('field_'.$field[0], $_POST['field_'.$field[0]], true);
           }
         }
       }
