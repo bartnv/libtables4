@@ -44,7 +44,7 @@ INPUT.lt-delete:hover { background:linear-gradient(to bottom, #fe1a00 5%, #ce010
 INPUT.lt-tableaction { float: right; margin-left: 5px; }
 INPUT.lt-add-option { margin-left: 5px; }
 
-DIV.lt-search-form { display: grid; grid-template-columns: repeat(3, auto); justify-items: start; align-items: center; grid-column-gap: 0.5rem; grid-row-gap: 0.5rem; align-items: start; }
+DIV.lt-search-form { width: fit-content; display: grid; grid-template-columns: repeat(3, auto); justify-items: start; grid-column-gap: 0.5rem; grid-row-gap: 0.5rem; align-items: start; }
 DIV.lt-search-form > INPUT { justify-self: stretch; }
 DIV.lt-search-form-radio { border-left: solid lightgrey 1px; }
 SELECT.lt-search-form-select { width: 100%; }

@@ -57,9 +57,28 @@ function generateId(bytes) {
 }
 
 function tr(str) {
-  if (lang == 0) return str;
-  if (transl.hasOwnProperty(str) && (transl[str][lang] !== null)) return transl[str][lang];
-  return str;
+  switch (navigator.language) {
+    case "nl":
+    case "nl-NL":
+      switch (str) {
+        case "Total": return "Totaal";
+        case "Page": return "Pagina";
+        case "Row": return "Rij";
+        case "of": return "van";
+        case "Error": return "Fout";
+        case "Insert": return "Toevoegen";
+        case "Export as": return "Exporteren als";
+        case "Row has errors and cannot be inserted": return "Rij heeft fouten en kan niet worden toegevoegd";
+        case "Select": return "Selecteren";
+        case "rows for export": return "rijen om te exporteren";
+        case "Next": return "Volgende";
+        case "Previous": return "Vorige";
+        case "Field": return "Veld";
+        case "may not be empty": return "mag niet leeg zijn";
+        default: return str;
+      }
+    default: return str;
+  }
 }
 
 function escape(val) {
@@ -855,7 +874,7 @@ function renderTableFormat(table, data, sub) {
   if (data.rows && data.rows.length > 1) {
     headstr += `<tr class="lt-limit"><th colspan="${data.headers.length}">`;
     headstr += `<a href="javascript:goPage('${table.attr('id')}', 'prev')"><span class="lt-page-control">&lt;</span></a> `;
-    headstr += `${data.options.pagename?data.options.pagename:tr('Row')} ${data.options.page} ${tr('of')} ${data.rows.length}`;
+    headstr += `${data.options.pagename!=undefined?data.options.pagename:tr('Row')} ${data.options.page} ${tr('of')} ${data.rows.length}`;
     headstr += ` <a href="javascript:goPage('${table.attr('id')}', 'next')"><span class="lt-page-control">&gt;</span></a></th></tr>`;
   }
 
