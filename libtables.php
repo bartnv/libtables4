@@ -176,7 +176,7 @@ function prepare_table($table) {
   return $ret;
 }
 
-function get_selectoptions($query) {
+function get_selectoptions($query, $params = []) {
   global $dbh;
 
   $ret = [];
@@ -188,7 +188,7 @@ function get_selectoptions($query) {
     $ret['error'] = $e->getMessage();
     return $ret;
   }
-  if (!$res->execute()) {
+  if (!$res->execute($params)) {
     $ret['error'] = $res->errorInfo()[2];
     return $ret;
   }
@@ -209,7 +209,7 @@ function prepare_options($options) {
         if (isset($edit[1])) { $edit['query'] = $edit[1]; unset($edit[1]); }
         unset($edit['sqlfunction']);
         unset($edit['phpfunction']);
-        if (isset($edit['query'])) {
+        if (isset($edit['query']) && (empty($edit['type']) || ($edit['type'] != 'search'))) {
           $ret = get_selectoptions($edit['query']);
           if (!empty($ret['error'])) error_log('Libtables error: ' . $ret['error']);
           else $edit['list'] = $ret;
@@ -443,6 +443,7 @@ function lt_query($query, $id = 0, $params = []) {
   $ret['querytime'] = intval((microtime(TRUE)-$start)*1000);
 
   if ($id) {
+    $ret['rows'] = [];
     while ($row = $res->fetch(PDO::FETCH_NUM)) {
       if ($row[0] == $id) {
         $ret['rows'][0] = $row;
