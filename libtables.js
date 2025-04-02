@@ -1499,18 +1499,19 @@ function renderCell(data, row, c, element) {
   if (data['types'][c].startsWith('int')) classes.push('lt-numeric');
   if (options.class && options.class[c]) classes.push(replaceHashes(options.class[c], row));
   if (options.edit && options.edit[c]) {
+    let edit = options.edit[c];
     classes.push('lt-edit');
-    if (typeof(options.edit[c]) == 'string') onclick = ' onclick="doEdit(this)"';
-    else if (typeof(options.edit[c]) == 'object') {
-      if (options.edit[c].required && (row[c] === null)) classes.push('lt-required-empty');
-      if (options.edit[c].condition && !eval(replaceHashes(options.edit[c].condition, row))) {
+    if (typeof(edit) == 'string') onclick = ' onclick="doEdit(this)"';
+    else if (typeof(edit) == 'object') {
+      if (edit.required && (row[c] === null)) classes.push('lt-required-empty');
+      if (edit.condition && !eval(replaceHashes(edit.condition, row))) {
         onclick = '';
         classes.pop(); // Remove the .lt-edit class
       }
-      else if (options.edit[c].show) { // Supported is 'always' and 'switch'
-        input = renderEdit(options.edit[c], null, row[c], ' onchange="directEdit(this);"');
-        if (options.edit[c].required && ((row[c] === false) || (row[c] === options.edit[c].falsevalue))) classes.push('lt-required-empty');
-        if (options.edit[c].show == 'switch') {
+      else if (edit.show) { // Supported is 'always' and 'switch'
+        input = renderEdit(edit, null, row[c], ' onchange="directEdit(this);"');
+        if (edit.required && ((row[c] === false) || (row[c] === edit.falsevalue))) classes.push('lt-required-empty');
+        if (edit.show == 'switch') {
           let arr = new Uint8Array(8);
           crypto.getRandomValues(arr);
           let id = arr.join('');
@@ -1519,7 +1520,7 @@ function renderCell(data, row, c, element) {
           classes.push('lt-switch');
         }
       }
-      else if (options.edit[c].query || (!options.edit[c].target && (options.edit[c].length >= 2))) onclick = ' onclick="doEditSelect(this)"';
+      else if ((edit.query || (!edit.target && (edit.length >= 2))) && (edit.type != 'search')) onclick = ' onclick="doEditSelect(this)"';
       else onclick = ' onclick="doEdit(this)"';
     }
   }
@@ -1688,7 +1689,7 @@ function updateTable(tbody, data, newrows) {
         if (oldrows[i][0] == rowid) {
           for (let j = 0; j < newrows.length; j++) {
             if (newrows[j][0] == rowid) {
-              updateRow(data.options, tbody, oldrows[i], newrows[j]);
+              updateRow(data, tbody, oldrows[i], newrows[j]);
               return;
             }
           }
@@ -1707,7 +1708,7 @@ function updateTable(tbody, data, newrows) {
     found = 0;
     for (let j = 0; j < newrows.length; j++) {
       if (oldrows[i][0] == newrows[j][0]) { // Row remains
-        if (!data.options.format || (i+1 == data.options.page)) updateRow(data.options, tbody, oldrows[i], newrows[j]);
+        if (!data.options.format || (i+1 == data.options.page)) updateRow(data, tbody, oldrows[i], newrows[j]);
         newrows.splice(j, 1);
         found = 1;
         break;
@@ -1737,9 +1738,10 @@ function updateTable(tbody, data, newrows) {
   }
   console.log(`Refresh timings for table ${data.tag}: sql ${data.querytime} download ${data.downloadtime} render ${(Date.now()-start)} ms`);
 }
-function updateRow(options, tbody, oldrow, newrow) {
+function updateRow(data, tbody, oldrow, newrow) {
   let offset = 1;
   let changes = false;
+  let options = data.options;
 
   for (let c = 1; c < oldrow.length; c++) {
     let cell = null;
@@ -1769,7 +1771,7 @@ function updateRow(options, tbody, oldrow, newrow) {
       if (options.format) cell = tbody.find('.lt-data').eq(c-1);
       else cell = tbody.children(`[data-rowid="${oldrow[0]}"]`).children().eq(c-offset);
       if (cell) {
-        let newcell = $(renderCell(options, newrow, c));
+        let newcell = $(renderCell(data, newrow, c));
         cell.replaceWith(newcell);
         cell = newcell;
         cell.css('background-color', 'green');
@@ -1885,13 +1887,18 @@ function renderEdit(edit, cell, content, handler) {
   else if (edit.type == 'datauri') {
     input = '<input type="file" id="editbox" name="input">';
   }
+  else if (edit.type == 'search') {
+    input = '<input type="search" id="editbox" name="input">';
+  }
   else {
     let pattern;
     if (edit.pattern) pattern = ` pattern="${edit.pattern}"`;
     else pattern = '';
     input = `<input type="text" id="editbox" name="input" value="${escape(content)}"${pattern} style="width: ${cell.width()}px; height: ${cell.height()}px;">`;
   }
-  return $(input);
+  input = $(input);
+  if (edit.placeholder) input.prop('placeholder', edit.placeholder);
+  return input;
 }
 
 function doEdit(cell, newcontent) {
@@ -1913,11 +1920,31 @@ function doEdit(cell, newcontent) {
         let fr = new FileReader();
         $(fr).on('load', function() {
           checkEdit(cell, edit, fr.result);
+          edit.remove();
           cell.removeClass('lt-editing');
         });
         fr.readAsDataURL(edit[0].files[0]);
       }
     });
+    return;
+  }
+  if (data.options.edit[c].type == 'search') {
+    let wrapper = $('<div class="lt-edit-search"><div class="lt-edit-search-results"></div></div>');
+    wrapper.on('click', '.lt-edit-search-results > *', function() {
+      edit.val(this.dataset.id);
+      checkEdit(cell, edit, content);
+      cell.removeClass('lt-editing');
+    });
+    wrapper.prepend(edit);
+    cell.append(wrapper);
+    edit.on('input', doEditSearch);
+    edit.on('keyup', function(evt) {
+      if (evt.originalEvent.key == 'Escape') {
+        edit.remove();
+        cell.removeClass('lt-editing').text(content);
+      }
+    });
+    edit.focus();
     return;
   }
 
@@ -2034,6 +2061,55 @@ function doEditSelect(cell) {
     }
   });
   cell.css({ backgroundColor: '#ffa0a0' });
+}
+
+function doEditSearch(evt) {
+  let input = evt.target;
+  let cell = $(input).closest('td');
+  let src = cell.closest('table').attr('id');
+  let c, data = tables[src].data;
+  if (data.options.format) c = cell.closest('tbody').find('.lt-data').index(cell)+1;
+  else c = colVisualToReal(data, cell.parent().children('.lt-data').index(cell)+1);
+  let edit = data.options.edit[c];
+
+  if (input.value.length) {
+    if (edit.debounce) {
+      edit.debounce.value = input.value;
+      clearTimeout(edit.debounce.timeout);
+      edit.debounce.timeout = setTimeout(edit.debounce.function, 250);
+      return;
+    }
+    edit.debounce = {};
+    edit.debounce.value = input.value;
+    edit.debounce.function = function() {
+      let params = { col: c, value: edit.debounce.value };
+      let results = cell.find('.lt-edit-search-results').empty().append('<div class="lt-edit-search-results-message">Zoeken...</div>');
+      $.ajax({
+        method: 'post',
+        url: `${ajaxUrl}?tab=${tab}&mode=editsearch&src=${src}`,
+        data: params,
+        dataType: 'json',
+        success: function(data) {
+          if (data.error) return appError(data.error, cell);
+          results.empty();
+          if (data.toomany) results.append('<div class="lt-edit-search-results-message">Te veel resultaten</div>');
+          else {
+            if (!data.items.length) {
+              results.append('<div class="lt-edit-search-results-message">Geen resultaten</div>')
+            }
+            else for (let item of data.items) {
+              results.append(`<div data-id="${item[0]}">${item[1]}</div>`);
+            }
+          }
+        }
+      });
+      delete edit.debounce;
+    };
+    edit.debounce.timeout = setTimeout(edit.debounce.function, 500);
+  }
+  else {
+    cell.find('.lt-edit-search-results').empty();
+  }
 }
 
 function loadSelectbox(cell, list, content, required) {
@@ -2187,21 +2263,36 @@ function checkEdit(cell, edit, oldvalue) {
             if ((data.input == 'true') || (data.input == options.edit[c].truevalue)) data.input = true;
             else if ((data.input == 'false') || (data.input == options.edit[c].falsevalue)) data.input = false;
             if (options.edit[c].query || (!options.edit[c].target && (options.edit[c].length == 2))) data.input = edit.find('option:selected').text();
-            if ((data.input === '') && (data.rows[0][c] === null)) data.input = null;
-
-            if (options.edit[c].type == 'datauri'); // Don't update the cell now so that the data-uri is re-rendered by updateRow()
-            else rows[r][c] = data.input;
-            updateRow(options, this.closest('tbody'), rows[r], data.rows[0]);
-            rows[r] = data.rows[0];
+            if (data.rows.length === 0) { // Row is not part of the new table
+              let row = this.closest('tbody').find(`[data-rowid="${rows[r][0]}"]`);
+              if (row.length) {
+                row.addClass('notransition');
+                // row.css('background-color', 'red');
+                if (!options.format) {
+                  row.animate({ opacity: 0 }, 2000, 'swing', function() {
+                    $(this).css('height', $(this).height());
+                    $(this).empty();
+                    $(this).animate({ height: 0 }, 1000, 'linear', function() { $(this).remove(); });
+                  });
+                }
+              }
+            }
+            else {
+              if ((data.input === '') && (data.rows[0][c] === null)) data.input = null;
+              if (options.edit[c].type == 'datauri'); // Don't update the cell now so that the data-uri is re-rendered by updateRow()
+              else rows[r][c] = data.input;
+              updateRow(tables[src].data, this.closest('tbody'), rows[r], data.rows[0]);
+              rows[r] = data.rows[0];
+              if (options.edit[c].required) {
+                if (data.rows[0][c] === null) this.addClass('lt-required-empty');
+                else this.removeClass('lt-required-empty');
+              }
+            }
             if (options.callbacks && options.callbacks.change) window.setTimeout(options.callbacks.change, 0);
             if (options.trigger) loadOrRefreshCollection($('#' + options.trigger));
             else if (options.edit.trigger) loadOrRefreshCollection($('#' + options.edit.trigger));
             if (options.sum) updateSums(this.closest('table').find('tfoot'), tables[src].data);
-            if (options.edit[c].required) {
-              if (data.rows[0][c] === null) this.addClass('lt-required-empty');
-              else this.removeClass('lt-required-empty');
-            }
-          }
+        }
         }
       }
     });

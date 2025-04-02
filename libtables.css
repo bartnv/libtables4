@@ -51,6 +51,14 @@ SELECT.lt-search-form-select { width: 100%; }
 DIV.lt-search-form-buttons { grid-column: 1 / 4; }
 DIV.lt-search-form-buttons > *:not(:first-child):not(select) { margin-left: 10px; }
 
+DIV.lt-edit-search { position: relative; }
+DIV.lt-edit-search-results { z-index: 1000; position: absolute; width: 30rem; background-color: white; border: solid black 1px; }
+DIV.lt-edit-search-results:empty { display: none; }
+DIV.lt-edit-search-results > * { padding: 5px; cursor: pointer; }
+DIV.lt-edit-search-results > *:hover { background-color: lightgrey; }
+DIV.lt-edit-search-results > *:not(:first-child) { border-top: solid black 1px; }
+DIV.lt-edit-search-results-message { font-style: italic; }
+
 .lt-switch { position: relative; margin-left: 10px; }
 .lt-switch-input { display: none; }
 .lt-switch-label { display: block; width: 48px; height: 24px; }

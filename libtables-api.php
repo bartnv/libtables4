@@ -613,6 +613,30 @@ switch ($_GET['mode']) {
     }
     if (!empty($edit['insert']) || !empty($edit[2])) $ret['insert'] = true;
     break;
+  case 'editsearch':
+    if (empty($_POST['value'])) fatalerr("Empty search value in mode editsearch");
+ 
+    $table = lt_find_table($_GET['src']);
+    $edit = $table['options']['edit'];
+    if (!empty($edit[$_POST['col']])) $edit = $edit[$_POST['col']];
+    elseif (!empty($table['options']['insert']) && !empty($table['options']['insert'][$_POST['col']])) $edit = $table['options']['insert'][$_POST['col']];
+    else fatalerr('No edit option found for column ' . $_POST['col'] . ' in table ' . $_GET['src']);
+
+    if (!is_array($edit)) fatalerr('No editselect option found for column ' . $_POST['col'] . ' in table ' . $_GET['src']);
+    if (!isset($edit['type']) || ($edit['type'] !== 'search')) fatalerr('No editselect option found for column ' . $_POST['col'] . ' in table ' . $_GET['src']);
+    if (empty($edit['query'])) fatalerr('No query found for search edit on column ' . $_POST['col'] . ' in table ' . $_GET['src']);
+
+    $ret = get_selectoptions($edit['query'] . ' LIMIT 26', [ '%' . str_replace(' ', '%', $_POST['value']) . '%' ]);
+    if (!empty($ret['error'])) break;
+    if (count($ret['items']) == 26) {
+      $ret = '{ "toomany": 1 }';
+      break;
+    }
+    if (!empty($_POST['crc']) && ($_POST['crc'] == $ret['crc'])) {
+      $ret = '{ "nochange": 1 }';
+      break;
+    }
+    break;
   case 'action':
     if (empty($_POST['type'])) fatalerr('No type specified for mode action');
 
