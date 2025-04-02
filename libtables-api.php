@@ -22,9 +22,15 @@ require('libtables.php');
 
 global $dbh;
 global $tab;
+global $lt_settings;
+
+if (isset($lt_settings['access_control'])) {
+  if (isset($lt_settings['access_control']['lt_var'])) {
+    if (!lt_isvar($lt_settings['access_control']['lt_var'])) fatalerr("You are not logged in");
+  }
+}
 
 function fatalerr($msg, $redirect = "") {
-  global $lt_settings;
   $ret['error'] = $msg;
   if (!empty($lt_settings['error_rewrite'])) {
     foreach ($lt_settings['error_rewrite'] as $key => $value) {
