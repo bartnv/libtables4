@@ -983,6 +983,7 @@ function renderTableFormatBody(tbody, data, offset) {
 
 function renderTitle(data) {
   let str = `<tr><th class="lt-title" colspan="${data.headers.length+1}">${escape(tr(data.title))}`;
+  if (data.options.showcount === true) str += ' (' + data.rows.length + ')';
   // if (data.options.popout && (data.options.popout.type == 'floating-div')) {
   //   str += '<span class="lt-popout ' + (data.options.popout.icon_class?data.options.popout.icon_class:"");
   //   str += '" onclick="showTableInDialog($(this).closest(\'table\'));"></span>';
