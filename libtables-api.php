@@ -559,6 +559,17 @@ switch ($_GET['mode']) {
       }
       lt_audit('UPDATE', $target[0], $_POST['row'], $target[1], NULL, $_POST['val']);
     }
+    if ($stmt->rowCount() === 0) {
+      if ($edit['upsert']??false === true) {
+        if (!($stmt = $dbh->prepare('INSERT INTO ' . $target[0] . ' (' . lt_find_pk_column($target[0]) . ', ' . $target[1] . ') VALUES (?, ?)'))) {
+          fatalerr("SQL prepare error: " . $dbh->errorInfo()[2]);
+        }
+        if (!($stmt->execute([ $_POST['row'], $_POST['val'] ]))) {
+          fatalerr("SQL execute error: " . $stmt->errorInfo()[2]);
+        }
+      }
+      else fatalerr("No rows updated");
+    }
 
     if (!empty($edit['sub'])) {
       $target[1] = $edit['sub'];
@@ -573,7 +584,7 @@ switch ($_GET['mode']) {
 
     $ret = is_array($edit)?doEditInsertRuns($edit, $_POST['row'], $_POST['val']):[];
     $ret += lt_query($table['query'], $_POST['row']);
-    if (isset($ret['error'])) fatalerr('Query for table ' . $table['title'] . ' in block ' . $src[0] . " returned error:\n\n" . $ret['error']);
+    if (isset($ret['error'])) unset($ret['error']); //fatalerr('Query for table ' . $table['title'] . ' in block ' . $src[0] . " returned error:\n\n" . $ret['error']);
     $ret['input'] = $_POST['val'];
     break;
   case 'selectbox':
@@ -581,7 +592,6 @@ switch ($_GET['mode']) {
 
     $table = lt_find_table($_GET['src']);
     $edit = $table['options']['edit'];
-
     if (!empty($edit[$_POST['col']])) $edit = $edit[$_POST['col']];
     elseif (!empty($table['options']['insert']) && !empty($table['options']['insert'][$_POST['col']])) $edit = $table['options']['insert'][$_POST['col']];
     else fatalerr('No edit option found for column ' . $_POST['col'] . ' in table ' . $_GET['src']);
