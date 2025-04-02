@@ -1,6 +1,6 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
  * Libtables4: framework for building web-applications on relational databases *
- * Version 4.0.0-alpha / Copyright (C) 2024  Bart Noordervliet, MMVI           *
+ * Version 4.0.0-beta / Copyright (C) 2025  Bart Noordervliet, MMVI            *
  *                                                                             *
  * This program is free software: you can redistribute it and/or modify        *
  * it under the terms of the GNU Affero General Public License as              *
@@ -967,7 +967,6 @@ function renderTableFormatBody(tbody, data, offset) {
         appcount++;
       }
       else if ((fmt[r][c] == 'R') && (actions[actcount])) {
-        console.log(actions[actcount]);
         for (rowspan = 1; fmt[r+rowspan] && fmt[r+rowspan][c] == '|'; rowspan++);
         for (colspan = 1; fmt[r][c+colspan] == '-'; colspan++);
         actions[actcount].colSpan = colspan;
