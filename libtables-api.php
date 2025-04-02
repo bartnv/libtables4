@@ -269,12 +269,13 @@ function lt_run_insert($table, $data, $idcolumn = '') {
   return $id;
 }
 
-function doEditInsertRuns($item, $id) {
+function doEditInsertRuns($item, $id, $val = null) {
   $ret = [];
   $lt_sqloutput = '';
   $lt_phpoutput = '';
   $lt_blockoutput = '';
   lt_setvar('lt_id', $id, true);
+  lt_setvar('lt_val', $val, true);
   if (empty($item['runorder'])) $item['runorder'] = [ 'sql', 'php', 'block' ];
   foreach ($item['runorder'] as $run) {
     switch ($run) {
@@ -309,6 +310,7 @@ function doEditInsertRuns($item, $id) {
     }
   }
   lt_setvar('lt_id', NULL, true);
+  lt_setvar('lt_val', NULL, true);
   return $ret;
 }
 
@@ -569,7 +571,7 @@ switch ($_GET['mode']) {
       lt_audit('UPDATE', $target[0], $_POST['row'], $target[1], NULL, NULL);
     }
 
-    $ret = is_array($edit)?doEditInsertRuns($edit, $_POST['row']):[];
+    $ret = is_array($edit)?doEditInsertRuns($edit, $_POST['row'], $_POST['val']):[];
     $ret += lt_query($table['query'], $_POST['row']);
     if (isset($ret['error'])) fatalerr('Query for table ' . $table['title'] . ' in block ' . $src[0] . " returned error:\n\n" . $ret['error']);
     $ret['input'] = $_POST['val'];
