@@ -225,6 +225,7 @@ function doAction(button, addparam) {
       dataType: 'json',
       success: function(data) {
         let action = Array.isArray(tbl.options.rowaction)?tbl.options.rowaction[actionid]:tbl.options.rowaction;
+        if (action.runjs) runJs(replaceHashes(action.runjs, data.row));
         if (data.error) appError(data.error, table);
         if (data.usererror) userError(data.usererror);
         if (data.output) {
@@ -267,6 +268,10 @@ function doAction(button, addparam) {
       }
     });
   }
+}
+
+function runJs(code) {
+  return eval?.(`"use strict";${code}`);
 }
 
 function loadControl(div, attr) {
