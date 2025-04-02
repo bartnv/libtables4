@@ -49,6 +49,9 @@ $(document).ready(function() {
   else tab = sessionStorage.getItem('libtables_tabid');
   load($(document), true);
   window.setInterval(refresh, 30000);
+  $('BODY').on('keyup', '.lt-search', function(evt) {
+    if (evt.key == 'Enter') $(this).find('.lt-search-form-submit').click();
+  })
 });
 
 function generateId(bytes) {
