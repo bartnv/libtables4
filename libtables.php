@@ -287,6 +287,15 @@ function lt_col_nullable($table) {
   return $result;
 }
 
+function lt_block_exists($name) {
+  global $lt_settings;
+  $blocks = $lt_settings['blocks_dir'];
+  if (is_file($blocks . $name . '.yml')) return true;
+  if (is_file($blocks . $name . '.php')) return true;
+  if (is_file($blocks . $name . '.html')) return true;
+  return false;
+}
+
 function lt_print_block($block, $options = array()) {
   global $lt_settings;
   global $basename;
