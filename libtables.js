@@ -185,15 +185,7 @@ jQuery.fn.extend({
 
 function doAction(button, addparam) {
   button = $(button);
-  let table, thead, fullscreen = button.closest('#lt-fullscreen-div');
-  if (fullscreen.length) {
-    table = fullscreen.find('#lt-fullscreen-scroller table');
-    thead = fullscreen.find('thead');
-  }
-  else {
-    table = button.closest('table');
-    thead = button.closest('thead');
-  }
+  let table = button.closest('table');
   let src = table.attr('id');
 
   let paramstr = '';
@@ -232,7 +224,7 @@ function doAction(button, addparam) {
         refreshTable(table, src, true);
         if (tbl.options.trigger) loadOrRefreshCollection($('#' + tbl.options.trigger));
         // if (tbl.options.tableaction.trigger) loadOrRefreshCollection($('#' + tbl.options.tableaction.trigger));
-        // if (tbl.options.tableaction.replacetext) thead.find('.lt-tableaction').val(tbl.options.tableaction.replacetext);
+        // if (tbl.options.tableaction.replacetext) table.find('.lt-tableaction').val(tbl.options.tableaction.replacetext);
       }
     });
   }
@@ -686,8 +678,6 @@ function sortBy(tableId, el) {
 
   let tbody = table.find('tbody');
   let rowcount = renderTbody(tbody, data);
-  let div = table.closest('#lt-fullscreen-div');
-  if (div.length) syncColumnWidths(div); // Table is in fullscreen mode
 }
 
 function goPage(tableId, which) {
@@ -1005,14 +995,6 @@ function renderTableFormatBody(tbody, data, offset) {
 function renderTitle(data) {
   let str = `<tr><th class="lt-title" colspan="${data.headers.length+1}">${escape(tr(data.title))}`;
   if (data.options.showcount === true) str += ' (' + data.rows.length + ')';
-  // if (data.options.popout && (data.options.popout.type == 'floating-div')) {
-  //   str += '<span class="lt-popout ' + (data.options.popout.icon_class?data.options.popout.icon_class:"");
-  //   str += '" onclick="showTableInDialog($(this).closest(\'table\'));"></span>';
-  // }
-  // else if (data.options.popout && (data.options.popout.type == 'fullscreen')) {
-  //   str += '<span class="lt-fullscreen-button ' + (data.options.popout.icon_class?data.options.popout.icon_class:"") + '" ';
-  //   str += 'onclick="toggleTableFullscreen($(this).closest(\'table\'));"></span>';
-  // }
   if (data.options.tableaction && data.options.tableaction.text) {
     let action = data.options.tableaction;
     let disp;
@@ -1846,8 +1828,6 @@ function updateRow(data, tbody, oldrow, newrow) {
 function updateFilter(edit) {
   edit = $(edit);
   let table = edit.closest('table');
-  let fullscreen = table.closest('#lt-fullscreen-div');
-  if (fullscreen.length) table = fullscreen.find('#lt-fullscreen-scroller table');
   let data = tables[table.attr('id')].data;
   let c = colVisualToReal(data, edit.parent().index()+1);
   if (!data.filters) data.filters = {};
@@ -1860,7 +1840,6 @@ function updateFilter(edit) {
     catch (e) { edit.css('background-color', 'rgba(255,0,0,0.5)'); }
   }
   runFilters(table, data);
-  if (fullscreen.length) syncColumnWidths(fullscreen);
   if (data.options.sum) updateSums(table.find('tfoot'), data);
   let filters = {};
   for (let i in data.filters) {
@@ -1880,11 +1859,6 @@ function clearFilters(src) {
   table.find('.lt-filter').children('input').css('background-color', '').val('');
   data.filters = {};
   runFilters(table, data);
-  let fullscreen = table.closest('#lt-fullscreen-div');
-  if (fullscreen.length) {
-    fullscreen.find('thead .lt-filter input').css('background-color', '').val('');
-    syncColumnWidths(fullscreen);
-  }
 }
 
 function renderEdit(edit, cell, content, handler) {
