@@ -158,7 +158,7 @@ function loadOrRefreshCollection(coll, sub) {
       let attr = div.data();
       let src = attr.source;
       if (!tables[src] || !document.getElementById(src)) loadTable(div, attr, sub); // Using getElementById() because jQuery gets confused by the colon in the id
-      else refreshTable(div.find('table'), src, true);
+      else refreshTable(div.children(), src, true); // Should only have 1 child node
     }
     else if (div.hasClass('lt-div-text')) refreshText(div);
     else if (div.hasClass('lt-control')) {
@@ -576,6 +576,7 @@ function refreshTable(table, src, force = false) {
           if (data.options?.selectany?.links) tables[src].data.options.selectany.links = data.options.selectany.links;
           tables[src].doingajax = false;
           renderTable(this.empty(), tables[src].data);
+          this.parent().empty().append(tables[src].table);
           return;
         }
 
@@ -783,7 +784,7 @@ function renderTableSelect(table, data, sub) {
 
 function renderTableDivs(table, data, sub) {
   let container = $('<div class="lt-div-table"/>');
-  container.attr('id', table.attr('id'));
+  container.prop('id', table.prop('id'));
   if (data.options.class && data.options.class.table) container.addClass(data.options.class.table);
 
   let items = '';
@@ -802,7 +803,7 @@ function renderTableDivs(table, data, sub) {
     items += '</div>';
   }
   container.append($(items));
-  tables[container.attr('id')].table = container;
+  tables[container.prop('id')].table = container;
 }
 
 function listClick(el) {
