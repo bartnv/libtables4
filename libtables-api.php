@@ -439,8 +439,8 @@ switch ($_GET['mode']) {
     break;
   case 'refreshtext':
     $table = lt_find_table($_GET['src']);
-    if (isset($table['options']['allowhtml']) && $table['options']['allowhtml']) $ret['text'] = lt_query_to_string($query, $format);
-    else $ret['text'] = htmlspecialchars(lt_query_to_string($query, $format));
+    if (isset($table['options']['allowhtml']) && $table['options']['allowhtml']) $ret['text'] = lt_query_to_string($table['query'], $table['format']);
+    else $ret['text'] = htmlspecialchars(lt_query_to_string($table['query'], $table['format']));
     break;
   case 'select':
     if (empty($_POST['id']) || !is_numeric($_POST['id'])) fatalerr('Invalid row id in mode select');
