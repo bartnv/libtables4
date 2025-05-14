@@ -353,6 +353,7 @@ function lt_print_block($block, $options = array()) {
             if (isset($item['columns'])) $item['type'] = 'insert';
             elseif (isset($item['format'])) $item['type'] = 'text';
             elseif (isset($item['query'])) $item['type'] = 'table';
+            elseif (isset($item['html'])) $item['type'] = 'html';
             else $item['type'] = 'control';
           }
           if (!isset($item['tag'])) $item['tag'] = "$n";
@@ -372,6 +373,9 @@ function lt_print_block($block, $options = array()) {
               break;
             case 'text':
               _lt_text($item['tag'], $item['query'], $item['format'], $item['options']);
+              break;
+            case 'html':
+              print $item['html'];
               break;
             default:
               error_log("Libtables error: invalid item type '{$item['type']}' in block $block");
