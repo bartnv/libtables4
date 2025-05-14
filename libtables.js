@@ -1504,18 +1504,18 @@ function renderRow(data, row) {
 function renderCell(data, row, c, element) {
   let options = data.options;
   if (!element) element = 'td';
-  let input, onclick;
+  let input;
+  let attributes = '';
   let classes = [ 'lt-cell', 'lt-data' ];
   if (data['types'][c].startsWith('int')) classes.push('lt-numeric');
   if (options.class && options.class[c]) classes.push(replaceHashes(options.class[c], row));
   if (options.edit && options.edit[c]) {
     let edit = options.edit[c];
     classes.push('lt-edit');
-    if (typeof(edit) == 'string') onclick = ' onclick="doEdit(this)"';
+    if (typeof(edit) == 'string') attributes += ' onclick="doEdit(this)"';
     else if (typeof(edit) == 'object') {
       if (edit.required && (row[c] === null)) classes.push('lt-required-empty');
       if (edit.condition && !eval(replaceHashes(edit.condition, row))) {
-        onclick = '';
         classes.pop(); // Remove the .lt-edit class
       }
       else if (edit.show) { // Supported is 'always' and 'switch'
@@ -1530,19 +1530,17 @@ function renderCell(data, row, c, element) {
           classes.push('lt-switch');
         }
       }
-      else if ((edit.query || (!edit.target && (edit.length >= 2))) && (edit.type != 'search')) onclick = ' onclick="doEditSelect(this)"';
-      else onclick = ' onclick="doEdit(this)"';
+      else if ((edit.query || (!edit.target && (edit.length >= 2))) && (edit.type != 'search')) attributes += ' onclick="doEditSelect(this)"';
+      else attributes += ' onclick="doEdit(this)"';
     }
   }
-  else onclick = "";
-  let mouseover, style, content;
+  let content;
   if (options.mouseover && options.mouseover[c+1] && row[c+1]) {
-    mouseover = ` title="${row[c+1]}"`;
+    attributes += ` title="${row[c+1]}"`;
     classes.push('lt-mouseover');
   }
-  else mouseover = '';
-  if (options.style && options.style[c]) style = ` style="${replaceHashes(options.style[c], row)}"`;
-  else style = '';
+  if (options.style && options.style[c]) attributes += ` style="${replaceHashes(options.style[c], row)}"`;
+  if (options.display == 'divs') attributes += ` data-colid="${c}"`;
 
   if (options.subtables && (options.subtables[c])) {
     content = `<div class="lt-div" data-source="${options.subtables[c]}" data-sub="true">Loading subtable ${options.subtables[c]}</div>`;
@@ -1566,7 +1564,7 @@ function renderCell(data, row, c, element) {
   }
   else content = escape(row[c]);
 
-  return `<${element} class="${classes.join(' ')}"${style + onclick + mouseover}>${content}</${element}>`;
+  return `<${element} class="${classes.join(' ')}"${attributes}>${content}</${element}>`;
 }
 
 function renderActions(actions, row) {
