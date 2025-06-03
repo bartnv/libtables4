@@ -26,6 +26,7 @@ TR:hover TD.lt-edit:not(.lt-editing)::after {
   /* Image source: http://simpleicon.com/ */
   position: absolute; top: 0px; right: 0px; width: 18px; height: 18px; z-index: 500;
 }
+TBODY.lt-rowlink TR { cursor: pointer; }
 TD.lt-notsaved { background-color: #ffa0a0 }
 .lt-required { background-color: rgb(255,220,220); }
 

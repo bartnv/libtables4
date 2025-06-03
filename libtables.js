@@ -1465,7 +1465,13 @@ function renderTbody(tbody, data) {
     }
   }
   tbody[0].innerHTML = rows.join('');
-  tbody.width(); // Force a DOM reflow to fix an IE9-11 bug https://stackoverflow.com/a/21032333
+  if (data.options.rowlink) {
+    tbody.on('click', 'tr', function() {
+      let row = data.rows.find((r) => r[0] == this.dataset.rowid);
+      window.location = replaceHashes(data.options.rowlink, row);
+    });
+    tbody.addClass('lt-rowlink');
+  }
   return rowcount;
 }
 
