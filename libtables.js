@@ -899,6 +899,11 @@ function renderTableFormatBody(tbody, data, offset) {
   let rowspan = 0;
   let fmt;
 
+  if (offset >= data.rows.length) {
+    console.log(`Invalid offset ${offset} requested for table with ${data.rows.length} rows`);
+    return;
+  }
+
   if (typeof(data.options.format) == 'string') fmt = data.options.format.split('\n');
   else fmt = data.options.format;
 
