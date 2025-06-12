@@ -736,21 +736,42 @@ function renderTable(table, data, sub) {
   console.log(`Load timings for ${sub?'sub':''}table ${data.tag}: sql ${data.querytime?data.querytime:'n/a'} download ${data.downloadtime?data.downloadtime:'n/a'} render ${Date.now()-start} ms`);
 }
 
-// function renderTableVertical(table, data) {
-//   table.addClass('lt-insert');
-//   for (id in data.options.insert) {
-//     if (!$.isNumeric(id)) continue;
-//     let input = renderField(data.options.insert[id], data, id);
-//     let name;
-//     if (data.options.insert[id].name !== undefined) name = data.options.insert[id].name;
-//     else name = input.attr('name').split('.')[1];
-//     let label = '<label for="' + input.attr('name') + '">' + name + '</label>';
-//     let row = $('<tr><td class="lt-form-label">' + label + '</td><td class="lt-form-input"></td></tr>');
-//     row.find('.lt-form-input').append(input);
-//     table.append(row);
-//   }
-//   table.append('<tr><td colspan="2"><input type="button" class="lt-insert-button" value="' + tr('Insert') + '" onclick="doInsert(this)"></td></tr>');
-// }
+function renderTableVertical(table, data, sub) {
+  let thead = $('<thead/>'), tbody, tfoot, rowcount;
+
+  if (data.options.class && data.options.class.table) table.addClass(data.options.class.table);
+  if (data.title && !sub) thead.append(renderTitle(data));
+
+  if (data.options.hidetableifempty && !data.rows?.length) {
+    table.hide();
+    table.parent().data('crc', data.crc);
+    return;
+  }
+
+  tbody = $('<tbody/>');
+
+  if (!data.rows?.length && data.options.emptytabletext) {
+    tbody.html(`<tr class="lt-row"><td class="lt-cell lt-empty-placeholder" colspan="2">${data.options.emptytabletext}</td></tr>`);
+  }
+  else {
+    let row = data.rows[0];
+    let options = data.options;
+    let html = [];
+    for (let c = options.showid?0:1; c < row.length; c++) { // Loop over each column
+      if (options.mouseover && options.mouseover[c]) continue;
+      if (options.hidecolumn && options.hidecolumn[c]) continue;
+      if (options.skipemptyfields && row[c] === null) continue;
+      html.push(`<tr><td class="lt-head">${data.headers[c]}</td>`);
+      html.push(renderCell(data, row, c));
+      html.push('</tr>');
+    }
+    // if (options.rowaction) html.push(renderActions(options.rowaction, row));
+    tbody.html(html.join(''));
+  }
+
+  table.append(thead, tbody);
+  table.parent().data('crc', data.crc);
+}
 
 function renderTableSelect(table, data, sub) {
   let section = $(`<section class="lt-select"><h3>${data.title}</h3>`);
