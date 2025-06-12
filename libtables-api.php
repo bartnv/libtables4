@@ -425,6 +425,10 @@ switch ($_GET['mode']) {
         $where .= $config['column'] . ' @@ websearch_to_tsquery(\'dutch\', :' . $field['name'] . ')';
         $values[$field['name']] = $field['value'];
       }
+      elseif (isset($config['comparison'])) {
+        $where .= $config['column'] . ' ' . $config['comparison'];
+        $values[$field['name']] = $field['value'];
+      }
       else {
         $where .= $config['column'] . ' ilike :' . $field['name'];
         $values[$field['name']] = '%' . str_replace([ "'", ' ', '.' ], '%', trim($field['value'])) . '%';
