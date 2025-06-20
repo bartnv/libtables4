@@ -493,8 +493,8 @@ function loadTable(div, attr, sub) {
     let json = atob(attr.embedded.replace(/\n/g, ''));
     let data = JSON.parse(json);
     tables[src].data = data;
-    renderTable(table, data);
-    div.empty().append(tables[src].table);
+    renderTable(table, data, div);
+    // div.empty().append(tables[src].table);
     div.removeAttr('embedded');
   }
   // else if (tables[src] && tables[src].data && (tables[src].data.rowcount != -1) && tables[src].data.options && (tables[src].data.options.nocache !== true)) {
@@ -505,8 +505,7 @@ function loadTable(div, attr, sub) {
   //   console.log(tables[src]);
   //   tables[src].table = table;
   //   console.log(`Rendering table ${src} from existing data`);
-  //   renderTable(table, tables[src].data);
-  //   div.empty().append(tables[src].table);
+  //   renderTable(table, tables[src].data, div);
   //   refreshTable(table, src);
   // }
   else {
@@ -528,8 +527,8 @@ function loadTable(div, attr, sub) {
           data.downloadtime = Date.now() - tables[src].start - data.querytime;
           if (this.data('active')) data.active = this.data('active');
           tables[src].data = data;
-          renderTable(table, data, sub);
-          this.empty().append(tables[src].table);
+          renderTable(table, data, this, sub);
+          // this.empty().append(tables[src].table);
           if (data.options.callbacks && data.options.callbacks.load) window.setTimeout(data.options.callbacks.load.replace('#src', this.data('source')), 0);
         }
         tables[src].doingajax = false;
@@ -575,8 +574,8 @@ function refreshTable(table, src, force = false) {
           tables[src].data.querytime = data.querytime;
           if (data.options?.selectany?.links) tables[src].data.options.selectany.links = data.options.selectany.links;
           tables[src].doingajax = false;
-          renderTable(this.empty(), tables[src].data);
-          this.parent().empty().append(tables[src].table);
+          renderTable(this.empty(), tables[src].data, this.parent());
+          // this.parent().empty().append(tables[src].table);
           return;
         }
 
@@ -715,7 +714,7 @@ function replaceHashes(str, row, returntype = false) {
   return str.replace('\0', '#');
 }
 
-function renderTable(table, data, sub) {
+function renderTable(table, data, target, sub) {
   let start = Date.now();
   let filters = sessionStorage.getItem(`lt_filters_${data.block}_${data.tag}`);
   if (filters) {
@@ -733,6 +732,8 @@ function renderTable(table, data, sub) {
   else if (data.options.format) renderTableFormat(table, data, sub);
   else if (data.options.renderfunction) window[data.options.renderfunction](table, data);
   else renderTableGrid(table, data, sub);
+  target.empty().append(tables[`${data.block}:${data.tag}`].table);
+  if (data.options.onloadscript) eval(data.options.onloadscript);
   console.log(`Load timings for ${sub?'sub':''}table ${data.tag}: sql ${data.querytime?data.querytime:'n/a'} download ${data.downloadtime?data.downloadtime:'n/a'} render ${Date.now()-start} ms`);
 }
 
