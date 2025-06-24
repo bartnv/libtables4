@@ -56,7 +56,7 @@ $(document).ready(function() {
 
 function generateId(bytes) {
   let arr = new Uint8Array(bytes);
-  return btoa(String.fromCharCode.apply(null, crypto.getRandomValues(arr)));
+  return btoa(String.fromCharCode.apply(null, crypto.getRandomValues(arr))).replace('+', '-');
 }
 
 function tr(str) {
@@ -389,7 +389,7 @@ function loadSearch(div, attr) {
         updateSearch(div, field, field.element);
       }
     }
-    if (field.name == name) form.find('.lt-search-form-submit').click();
+    if (field.name == name) form.find('.lt-search-form-submit').click(); // Triggers when the last search field is changed
   });
   form.append(buttons);
   div.append(form);
@@ -1178,6 +1178,7 @@ function renderTableGrid(table, data, sub) {
 
   if (data.active) {
     let row = tbody.find(`tr[data-rowid="${data.active}"]`);
+    if (!row.length) return;
     row.addClass('lt-row-active');
     setTimeout(function (row) { row.scrollIntoView({ behavior: 'instant', block: 'center', inline: 'center' }); }, 100, row[0]);
     setTimeout(function (row) { row.removeClass('lt-row-active'); }, 5000, row);
