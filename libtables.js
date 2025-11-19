@@ -889,9 +889,9 @@ function renderTableFormat(table, data, sub) {
 
   if (data.rows && data.rows.length > 1) {
     headstr += `<tr class="lt-limit"><th colspan="${data.headers.length}">`;
-    headstr += `<a href="javascript:goPage('${table.attr('id')}', 'prev')"><span class="lt-page-control">&lt;</span></a> `;
+    headstr += `<input type="button" value="<" onclick="goPage('${table.attr('id')}', 'prev')">`;
     headstr += `${data.options.pagename!=undefined?data.options.pagename:tr('Row')} ${data.options.page} ${tr('of')} ${data.rows.length}`;
-    headstr += ` <a href="javascript:goPage('${table.attr('id')}', 'next')"><span class="lt-page-control">&gt;</span></a></th></tr>`;
+    headstr += `<input type="button" value=">" onclick="goPage('${table.attr('id')}', 'next')">`;
   }
 
   let thead = $(`<thead>${headstr}</thead>`);
@@ -1045,7 +1045,10 @@ function renderHeaders(data, id) {
   if (data.options.hideheaders) return str;
   if (data.options.limit) {
     if (!data.options.page) data.options.page = 1;
-    str += `<tr class="lt-limit"><th colspan="${data.headers.length}"><a href="javascript:goPage('${id}', 'prev')">&lt;</a> <span class="lt-pages"></span> <a href="javascript:goPage('${id}', 'next')">&gt;</a></th></tr>`;
+    str += `<tr class="lt-limit"><th colspan="${data.headers.length}">`;
+    str += `<input type="button" value="<" onclick="goPage('${id}', 'prev')">`;
+    str += ' <span class="lt-pages"></span> ';
+    str += `<input type="button" value=">" onclick="goPage('${id}', 'next')">`;
   }
 
   str += '<tr class="lt-row">';
