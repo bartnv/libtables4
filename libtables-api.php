@@ -670,7 +670,7 @@ switch ($_GET['mode']) {
       if (empty($_POST['row'])) fatalerr('No row id passed in mode action in block ' . $_GET['src']);
       if (!is_numeric($_POST['row'])) fatalerr('Invalid row id passed in mode action in block ' . $_GET['src']);
       $id = intval($_POST['row']);
-      $data = lt_query($table['query'], $id);
+      $data = lt_query(str_replace('WHERE FALSE', 'WHERE TRUE', $table['query']), $id);
       if (empty($data['rows'])) fatalerr('Row with id ' . $_POST['row'] . ' not found in mode action in block ' . $_GET['src']);
       $ret['row'] = $data['rows'][0];
     }
