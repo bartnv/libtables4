@@ -1872,7 +1872,8 @@ function updateFilter(edit) {
     try { data.filters[c] = new RegExp(edit.val(), 'i'); }
     catch (e) { edit.css('background-color', 'rgba(255,0,0,0.5)'); }
   }
-  runFilters(table, data);
+  let rowcount = runFilters(table, data);
+  if (data.options.showcount) table.find('thead .lt-title').text(escape(tr(data.title)) + ' (' + rowcount + ' ' + tr('of') + ' ' + data.rows.length + ')');
   if (data.options.sum) updateSums(table.find('tfoot'), data);
   let filters = {};
   for (let i in data.filters) {
@@ -1885,6 +1886,7 @@ function runFilters(table, data) {
   let tbody = table.find('tbody');
   let rowcount = renderTbody(tbody, data);
   if (data.options.limit) table.find('.lt-pages').html(`${tr('Page')} ${data.options.page} ${tr('of')} ${Math.ceil(rowcount/data.options.limit)}`);
+  return rowcount;
 }
 function clearFilters(src) {
   let table = $(document.getElementById(src));
