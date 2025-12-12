@@ -890,7 +890,7 @@ function renderTableFormat(table, data, sub) {
   if (data.rows && data.rows.length > 1) {
     headstr += `<tr class="lt-limit"><th colspan="${data.headers.length}">`;
     headstr += `<input type="button" value="<" onclick="goPage('${table.attr('id')}', 'prev')">`;
-    headstr += `${data.options.pagename!=undefined?data.options.pagename:tr('Row')} ${data.options.page} ${tr('of')} ${data.rows.length}`;
+    headstr += ` ${data.options.pagename!=undefined?data.options.pagename:tr('Row')} ${data.options.page} ${tr('of')} ${data.rows.length} `;
     headstr += `<input type="button" value=">" onclick="goPage('${table.attr('id')}', 'next')">`;
   }
 
