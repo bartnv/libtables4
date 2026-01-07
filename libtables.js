@@ -1445,6 +1445,7 @@ function isFiltered(filters, row, options) {
   for (let i in filters) {
     if (filters[i] instanceof RegExp) {
       if ((typeof row[i] == 'string') && (row[i].search(filters[i]) >= 0)) continue;
+      if ((typeof row[i] == 'number') && (row[i].toString().search(filters[i]) >= 0)) continue;
       if (typeof row[i] == 'boolean') {
         if (String(row[i]).search(filters[i]) >= 0) continue;
         if (row[i] && options.edit && options.edit[i] && options.edit[i].truevalue && (options.edit[i].truevalue.search(filters[i]) >= 0)) continue;
