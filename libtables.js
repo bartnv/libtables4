@@ -1902,6 +1902,8 @@ function clearFilters(src) {
 
 function renderEdit(edit, cell, content, handler) {
   if (handler === undefined) handler = '';
+  let placeholder = '';
+  if (edit.placeholder) placeholder = ` placeholder=" ${edit.placeholder}"`;
   let input;
   if (edit.type == 'multiline') {
     input = `<textarea id="editbox" name="input" style="width: ${cell.width()}px; height: ${cell.height()}px;">${escape(content)}</textarea>`;
@@ -1922,22 +1924,20 @@ function renderEdit(edit, cell, content, handler) {
     input = `<input type="date" id="editbox" name="input" value="${value}">`;
   }
   else if (edit.type == 'email') {
-    input = `<input type="email" id="editbox" name="input" value="${escape(content)}">`;
+    input = `<input type="email" id="editbox" name="input" value="${escape(content)}"${placeholder}>`;
   }
   else if (edit.type == 'datauri') {
     input = '<input type="file" id="editbox" name="input">';
   }
   else if (edit.type == 'search') {
-    input = '<input type="search" id="editbox" name="input">';
+    input = `<input type="search" id="editbox" name="input"${placeholder}>`;
   }
   else {
     let pattern;
     if (edit.pattern) pattern = ` pattern="${edit.pattern}"`;
     else pattern = '';
-    input = `<input type="text" id="editbox" name="input" value="${escape(content)}"${pattern} style="width: ${cell.width()}px; height: ${cell.height()}px;">`;
+    input = `<input type="text" id="editbox" name="input" value="${escape(content)}"${pattern}${placeholder} style="width: ${cell.width()}px; height: ${cell.height()}px;">`;
   }
-  input = $(input);
-  if (edit.placeholder) input.prop('placeholder', edit.placeholder);
   return input;
 }
 
@@ -1951,7 +1951,7 @@ function doEdit(cell, newcontent) {
   if (data.options.format) c = cell.closest('tbody').find('.lt-data').index(cell)+1;
   else c = colVisualToReal(data, cell.parent().children('.lt-data').index(cell)+1);
 
-  let edit = renderEdit(data.options.edit[c], cell, typeof newcontent == 'string'?newcontent:content);
+  let edit = $(renderEdit(data.options.edit[c], cell, typeof newcontent == 'string'?newcontent:content));
   cell.empty().append(edit);
 
   if (data.options.edit[c].type == 'datauri') {
