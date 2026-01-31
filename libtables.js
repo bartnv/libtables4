@@ -2160,7 +2160,7 @@ function loadSelectbox(cell, list, content, required) {
   if (!required) selectbox.append('<option value=""></option>');
   for (let i = 0; list.items[i]; i++) {
     let label = list.items[i][1] + (list.items[i][2]?` (${list.items[i][2]})`:'');
-    if (label == content) {
+    if ((list.items[i][1] == content) || (label == content)) {
        selectbox.append(`<option value="${list.items[i][0]}" selected>${label}</option>`);
        oldvalue = String(list.items[i][0]);
        selected = 1;
