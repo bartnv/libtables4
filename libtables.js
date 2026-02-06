@@ -1112,6 +1112,9 @@ function renderHeaders(data, id) {
       }
       else row.append('<td/>');
     }
+    row.find('td').last()
+      .css('position', 'relative')
+      .append('<a href="javascript:clearFilters(\'' + id + '\');"><span class="lt-filter-clear" title="Clear filters"></span></a>');
     str += row.html();
   }
 
@@ -1897,6 +1900,7 @@ function clearFilters(src) {
   let data = tables[table.attr('id')].data;
   table.find('.lt-filter').children('input').css('background-color', '').val('');
   data.filters = {};
+  sessionStorage.removeItem(`lt_filters_${data.block}_${data.tag}`);
   runFilters(table, data);
 }
 
