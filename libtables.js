@@ -957,8 +957,8 @@ function renderTableFormatBody(tbody, data, offset) {
         row.append(tdstr);
       }
       else if (fmt[r][c] == 'C') {
-        if (colcount++ >= data.rows[offset].length) {
-          appError(`Too many columns specified in format string for ${data.block}:${data.tag}`, data.options.format);
+        if (colcount++ >= data.rows[offset].length-1) {
+          appError(`Too many columns specified in format string for ${data.block}:${data.tag}`);
           break;
         }
         while (data.options.mouseover && data.options.mouseover[colcount]) colcount++;
