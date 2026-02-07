@@ -87,7 +87,7 @@ function _lt_table($tag, $title, $query, $options = []) {
   global $basename; // Set by lt_print_block()
   global $block_options; // Set by lt_print_block()
 
-  if (!empty($options['classes']['div'])) $divclasses = 'lt-div ' . $options['classes']['div'];
+  if (!empty($options['class']['div'])) $divclasses = 'lt-div ' . $options['class']['div'];
   else $divclasses = 'lt-div';
 
   $divstr = ' <div id="' . $tag . '" class="' . $divclasses . '" data-source="' . $basename . ':' . $tag . '"';
