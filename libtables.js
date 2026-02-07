@@ -2345,7 +2345,7 @@ function checkEdit(cell, edit, oldvalue) {
             if (options.trigger) loadOrRefreshCollection($('#' + options.trigger));
             else if (options.edit.trigger) loadOrRefreshCollection($('#' + options.edit.trigger));
             if (options.sum) updateSums(this.closest('table').find('tfoot'), tables[src].data);
-        }
+          }
         }
       }
     });
