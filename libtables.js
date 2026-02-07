@@ -1026,6 +1026,7 @@ function renderTableFormatBody(tbody, data, offset) {
     }
     tbody.append(row);
   }
+  if (colcount < data.headers.length-1) appError(`Last ${data.headers.length-colcount-1} columns from query not used in format string for ${data.block}:${data.tag}`);
 }
 
 function renderTitle(data) {
