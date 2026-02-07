@@ -714,6 +714,12 @@ function replaceHashes(str, row, returntype = false) {
   }
   return str.replace('\0', '#');
 }
+function replaceHashesTable(str, n, row = null) {
+  if (str.indexOf('#') === -1) return str;
+  str = str.replace(/#n/g, n);
+  if (row) str = replaceHashes(str, row);
+  return str;
+}
 
 function renderTable(table, data, target, sub) {
   let start = Date.now();
@@ -809,6 +815,7 @@ function renderTableDivs(table, data, sub) {
   let container = $('<div class="lt-div-table"/>');
   container.prop('id', table.prop('id'));
   if (data.options.class && data.options.class.table) container.addClass(data.options.class.table);
+  if (data.title) container.append('<div class="lt-div-title">' + replaceHashesTable(data.title, data.rows.length) + '</div>');
 
   let items = '';
   for (let r = 0; r < data.rows.length; r++) { // Main loop over the data rows
