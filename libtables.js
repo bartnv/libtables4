@@ -264,6 +264,7 @@ function doAction(button, addparam) {
         }
         refreshTable(table, src, true);
         if (tbl.options.trigger) loadOrRefreshCollection($('#' + tbl.options.trigger));
+        if (action.trigger) loadOrRefreshCollection($('#' + action.trigger));
         // else if (data.redirect) window.location = data.redirect;
         // else if (data.replace) {
         //   $('#block_' + tbl.block).replaceWith(data.replace);
