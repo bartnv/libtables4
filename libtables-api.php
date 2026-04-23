@@ -152,37 +152,6 @@ function lt_find_pk_column($table) {
 //   return $edit;
 // }
 
-function replaceHashes($str, $row) {
-  if (empty($row)) return $str;
-  $str = str_replace('#id', $row[0], $str);
-  if (strpos($str, '#') !== FALSE) {
-    for ($i = count($row)-1; $i >= 0; $i--) $str = str_replace('#' . $i, $row[$i], $str);
-  }
-  return $str;
-}
-
-function arrayCondition($condition, $row) {
-  $left = replaceHashes($condition[0], $row);
-  $right = replaceHashes($condition[2], $row);
-  switch ($condition[1]) {
-    case '==': return ($left == $right);
-    case '!=': return ($left != $right);
-    case '<=': return ($left <= $right);
-    case '<': return ($left < $right);
-    case '>=': return ($left >= $right);
-    case '>': return ($left > $right);
-    case 'regex':
-      $res = preg_match($right, $left);
-      if ($res === FALSE) error_log('Invalid regex in rowaction condition');
-      return $res;
-    case '!regex':
-      $res = preg_match($right, $left);
-      if ($res === FALSE) error_log('Invalid regex in rowaction condition');
-      return ($res === 0);
-    default: error_log('Invalid comparison in rowaction condition');
-  }
-}
-
 function lt_audit($mode, $table, $row, $column, $oldval, $newval) {
   global $lt_settings;
   global $dbh;
@@ -525,8 +494,8 @@ switch ($_GET['mode']) {
     elseif (!empty($edit['phpfunction'])) {
       // $data = lt_query($table['query'], $_POST['row']);
       // if (!empty($data['error'])) fatalerr($data['error']);
-      // $func = 'return ' . str_replace('?', "'" . $_POST['val'] . "'", replaceHashes($edit['phpfunction'], $data['rows'][0])) . ';';
-      $func = 'return ' . str_replace('?', "'" . $_POST['val'] . "'", replaceHashes($edit['phpfunction'], $data['rows'][0])) . ';';
+      // $func = 'return ' . str_replace('?', "'" . $_POST['val'] . "'", lt_replace_hashes($edit['phpfunction'], $data['rows'][0])) . ';';
+      $func = 'return ' . str_replace('?', "'" . $_POST['val'] . "'", lt_replace_hashes($edit['phpfunction'], $data['rows'][0])) . ';';
       $ret = eval($func);
       if (!($stmt = $dbh->prepare('UPDATE ' . $target[0] . ' SET ' . $target[1] . ' = ? WHERE ' . lt_find_pk_column($target[0]) . ' = ?'))) {
         fatalerr("SQL prepare error: " . $dbh->errorInfo()[2]);
@@ -687,7 +656,7 @@ switch ($_GET['mode']) {
     if (!empty($action['setvar'])) {
       foreach ($action['setvar'] as $name => $value) {
         if ($name === 0) fatalerr('rowaction setvar value needs to be an object, not an array');
-        lt_setvar(replaceHashes($name, $ret['row']) . ':' . $tab, replaceHashes($value, $ret['row']));
+        lt_setvar(lt_replace_hashes($name, $ret['row']) . ':' . $tab, lt_replace_hashes($value, $ret['row']));
       }
     }
 
@@ -699,7 +668,7 @@ switch ($_GET['mode']) {
       switch ($run) {
         case 'sql':
           if (!empty($action['runsql'])) {
-            $lt_sqloutput = lt_query_single(replaceHashes($action['runsql'], $ret['row']), [ 'lt_phpoutput' => $lt_phpoutput, 'lt_blockoutput' => $lt_blockoutput ]);
+            $lt_sqloutput = lt_query_single(lt_replace_hashes($action['runsql'], $ret['row']), [ 'lt_phpoutput' => $lt_phpoutput, 'lt_blockoutput' => $lt_blockoutput ]);
             $ret['output'] = $lt_sqloutput;
           }
           break;
@@ -707,7 +676,7 @@ switch ($_GET['mode']) {
           if (!empty($action['runphp'])) {
             try {
               ob_start();
-              eval(replaceHashes($action['runphp'], $ret['row']));
+              eval(lt_replace_hashes($action['runphp'], $ret['row']));
               $lt_phpoutput = ob_get_clean();
               $ret['output'] = $lt_phpoutput;
             } catch (Exception $e) {
@@ -718,7 +687,7 @@ switch ($_GET['mode']) {
         case 'block':
           if (!empty($action['runblock'])) {
             ob_start();
-            lt_print_block(replaceHashes($action['runblock'], $ret['row']), [ 'nowrapper' => (($action['output']??null)=='block'?false:true) ]);
+            lt_print_block(lt_replace_hashes($action['runblock'], $ret['row']), [ 'nowrapper' => (($action['output']??null)=='block'?false:true) ]);
             $lt_blockoutput = ob_get_clean();
             $ret['output'] = $lt_blockoutput;
           }
@@ -954,7 +923,7 @@ switch ($_GET['mode']) {
 
     if (!empty($table['options']['delete']['runphp'])) {
       $data = lt_query($table['query'], $_POST['id']);
-      eval(replaceHashes($table['options']['delete']['runphp'], $data['rows'][0]));
+      eval(lt_replace_hashes($table['options']['delete']['runphp'], $data['rows'][0]));
     }
 
     if (!empty($table['options']['delete']['update'])) {
