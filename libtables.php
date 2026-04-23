@@ -29,6 +29,9 @@ if (is_file(dirname(__FILE__) . '/local.php')) {
 }
 
 $tables = [];
+define("LT_SHOW", 0);
+define("LT_HIDE", 1);
+define("LT_DISABLE", 2);
 
 function lt_setvar($name, $value, $internal = false) {
   if (!$internal && !preg_match('/^[a-zA-Z][a-zA-Z0-9]*(:[-A-Za-z0-9+\/]*={0,3})?$/', $name)) throw new Exception("invalid variable name '$name' used in lt_setvar");
@@ -135,6 +138,10 @@ function prepare_table($table) {
   elseif (isset($table['options']['export']['nopreview']) && $table['options']['export']['nopreview']) {
     $ret = lt_query($table['query'] . ' LIMIT 0');
     $ret['rowcount'] = lt_query_single('SELECT COUNT(*) FROM (' . $table['query'] . ') AS tmp');
+  }
+  elseif (isset($table['condition']) && ($con = lt_condition($table['condition'])) && ($con[count($con)-1] != LT_SHOW)) { // Yes, ugh, I know
+    $ret['condition'] = $con;
+    $ret['rowcount'] = -1;
   }
   elseif (strpos($table['query'], 'WHERE FALSE') && !empty($_SESSION['search_' . $table['block'] . '_' . $table['tag'] . '_where'])) {
     if (empty($_SESSION['search_' . $table['block'] . '_limit'])) $limit = '';
@@ -411,6 +418,59 @@ function lt_print_block($block, $options = array()) {
   return false;
 }
 
+function lt_condition($condition, $row = null) {
+  if (in_array(count($condition), [ 1, 3 ])) array_push($condition, LT_HIDE);
+  if (is_string($condition[0])) {
+    if (strpos($condition[0], ':') !== FALSE) { $condition[0] = lt_replace_params($condition[0]); }
+    if ((strpos($condition[0], '#') !== FALSE) && !$row) return $condition; // Needs to be evaluated clientside
+  }
+  if (count($condition) == 2) {
+    if ($condition[0]) $condition[0] = TRUE;
+    else $condition[0] = FALSE;
+    return $condition;
+  }
+  if (count($condition) != 4) {
+    error_log('Libtables: invalid condition: ' . json_encode($condition));
+    return [ FALSE, LT_HIDE ]; // Fail safe by not loading the table
+  }
+  if (is_string($condition[2])) {
+    if (strpos($condition[2], ':') !== FALSE) { $condition[2] = lt_replace_params($condition[2]); }
+    if ((strpos($condition[2], '#') !== FALSE) && !$row) return $condition; // Needs to be evaluated clientside
+  }
+  if (lt_condition_array($condition, $row)) return [ TRUE, LT_SHOW ];
+  return [ FALSE, $condition[3] ];
+}
+function lt_condition_array($condition, $row = null) {
+  $left = $row?lt_replace_hashes($condition[0], $row):$condition[0];
+  $right = $row?lt_replace_hashes($condition[2], $row):$condition[2];
+  switch ($condition[1]) {
+    case '==': return ($left == $right);
+    case '!=': return ($left != $right);
+    case '<=': return ($left <= $right);
+    case '<': return ($left < $right);
+    case '>=': return ($left >= $right);
+    case '>': return ($left > $right);
+    case 'regex':
+      $res = preg_match($right, $left);
+      if ($res === FALSE) error_log('Invalid regex in rowaction condition');
+      return $res;
+    case '!regex':
+      $res = preg_match($right, $left);
+      if ($res === FALSE) error_log('Invalid regex in rowaction condition');
+      return ($res === 0);
+    default: error_log('Invalid comparison in rowaction condition');
+      return FALSE;
+  }
+}
+
+function lt_replace_hashes($str, $row) {
+  if (empty($row) || !is_string($str)) return $str;
+  if (strpos($str, '#') !== FALSE) {
+    $str = str_replace('#id', $row[0], $str);
+    for ($i = count($row)-1; $i >= 0; $i--) $str = str_replace('#' . $i, $row[$i], $str);
+  }
+  return $str;
+}
 function lt_replace_params($str) {
   return preg_replace_callback("/(^| ):([a-z_]+)/", 
     function ($matches) {

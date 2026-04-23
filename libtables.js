@@ -39,6 +39,9 @@ let lists = {};
 let transl = {};
 let lang = 0;
 let $ = jQuery;
+window.LT_SHOW = 0;
+window.LT_HIDE = 1;
+window.LT_DISABLE = 2;
 
 $(document).ready(function() {
   if (!sessionStorage.getItem('libtables_tabid')) {
@@ -731,6 +734,21 @@ function renderTable(table, data, target, sub) {
       filters[i] = new RegExp(filters[i], 'i');
     }
     data.filters = filters;
+  }
+  if (data.condition) {
+    if (data.condition.length != 2) return console.log('Not implemented: arraycondition on table');
+    if (typeof(data.condition[0]) != 'boolean') return console.log('Not implemented: non-boolean single field condition');
+    if (!data.condition[0]) {
+      if (typeof(data.condition[1]) == 'string') {
+        target.empty().html(data.condition[1]);
+        return;
+      }
+      if (data.condition[1] == LT_HIDE) {
+        target.empty();
+        return;
+      }
+      return console.log('Not implemented: LT_DISABLE condition on table');
+    }
   }
   if (data.options.display && (data.options.display == 'list')) renderTableList(table, data, sub);
   else if (data.options.display && (data.options.display == 'divs')) renderTableDivs(table, data, sub);
@@ -1653,9 +1671,25 @@ function renderActions(actions, row) {
   return str;
 }
 
-function arrayCondition(condition, row) {
-  let left = (typeof condition[0] == 'string'?replaceHashes(condition[0], row, true):condition[0]);
-  let right = (typeof condition[2] == 'string'?replaceHashes(condition[2], row, true):condition[2]);
+function condition(condition, row = null) {
+  if ([1, 3].includes(condition.length)) condition.push(LT_HIDE);
+  if (condition.length == 2) {
+    if (condition[0]) return LT_SHOW;
+    return condition[1];
+  }
+  if (condition.length == 4) {
+    if (arrayCondition(condition, row)) return LT_SHOW;
+    return condition[3];
+  }
+  return LT_HIDE;
+}
+function arrayCondition(condition, row = null) {
+  let left = condition[0];
+  let right = condition[2];
+  if (row !== null) {
+    if ((typeof left == 'string') && (left.indexOf('#') > -1)) left = replaceHashes(left, row, true);
+    if ((typeof right == 'string') && (right.indexOf('#') > -1)) right = replaceHashes(left, row, true);
+  }
   switch (condition[1]) {
     case '==': return (left == right);
     case '!=': return (left != right);
@@ -1666,6 +1700,7 @@ function arrayCondition(condition, row) {
     case 'regex': return new RegExp(right).test(left);
     case '!regex': return !(new RegExp(right).test(left));
     default: console.err('Invalid comparison in rowaction condition');
+      return false;
   }
 }
 
