@@ -68,7 +68,7 @@ function lt_insert() {
 function _lt_control($tag, $options) {
   global $basename;
 
-  $divstr = ' <div id="' . $tag . '" class="lt-control" data-source="' . $basename . ':' . $tag . '"';
+  $divstr = ' <div id="block_' . $basename . '_' . $tag . '" class="lt-control" data-source="' . $basename . ':' . $tag . '"';
   $divstr .= ' data-options="' . base64_encode(json_encode($options)) . '"></div>';
   print $divstr;
 }
@@ -79,7 +79,7 @@ function _lt_text($tag, $query, $format, $options = []) {
   if (empty($options['classes']['div'])) $divclasses = 'lt-div-text';
   else $divclasses = 'lt-div-text ' . $options['classes']['div'];
 
-  print "<div id=\"$tag\" class=\"$divclasses\" data-source=\"$basename:$tag\">";
+  print '<div id="block_' . $basename . '_' . $tag . '" class="' . $divclasses . '" data-source="' . $basename . ':' . $tag . '">';
   if (isset($options['allowhtml']) && $options['allowhtml']) print lt_query_to_string($query, $format);
   else print htmlspecialchars(lt_query_to_string($query, $format));
   print "</div>\n";
@@ -93,7 +93,7 @@ function _lt_table($tag, $title, $query, $options = []) {
   if (!empty($options['class']['div'])) $divclasses = 'lt-div ' . $options['class']['div'];
   else $divclasses = 'lt-div';
 
-  $divstr = ' <div id="' . $tag . '" class="' . $divclasses . '" data-source="' . $basename . ':' . $tag . '"';
+  $divstr = ' <div id="block_' . $basename . '_' . $tag . '" class="' . $divclasses . '" data-source="' . $basename . ':' . $tag . '"';
 
   if (!empty($options['embed'])) {
     $table = [];
@@ -124,7 +124,7 @@ function _lt_search($tag, $options) {
     return;
   }
 
-  $divstr = ' <div id="' . $tag . '" class="lt-search" data-source="' . $basename . ':' . $tag . '"';
+  $divstr = ' <div id="block_' . $basename . '_' . $tag . '" class="lt-search" data-source="' . $basename . ':' . $tag . '"';
   $divstr .= ' data-options="' . base64_encode(json_encode($options)) . '"></div>';
   print $divstr;
 }
