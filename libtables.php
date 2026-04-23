@@ -76,8 +76,8 @@ function _lt_control($tag, $options) {
 function _lt_text($tag, $query, $format, $options = []) {
   global $basename;
 
-  if (empty($options['classes']['div'])) $divclasses = 'lt-div-text';
-  else $divclasses = 'lt-div-text ' . $options['classes']['div'];
+  if (empty($options['class']['div'])) $divclasses = 'lt-div-text';
+  else $divclasses = 'lt-div-text ' . $options['class']['div'];
 
   print '<div id="block_' . $basename . '_' . $tag . '" class="' . $divclasses . '" data-source="' . $basename . ':' . $tag . '">';
   if (isset($options['allowhtml']) && $options['allowhtml']) print lt_query_to_string($query, $format);
