@@ -102,7 +102,7 @@ function _lt_table($tag, $title, $query, $options = []) {
     $table['title'] = $title;
     $table['query'] = $query;
     $table['options'] = $options;
-  
+
     $data = prepare_table($table);
     if (!empty($data['error'])) {
       print '<p>Error: ' . $data['error'] . '</p>';
@@ -361,6 +361,7 @@ function lt_print_block($block, $options = array()) {
             elseif (isset($item['format'])) $item['type'] = 'text';
             elseif (isset($item['query'])) $item['type'] = 'table';
             elseif (isset($item['html'])) $item['type'] = 'html';
+            elseif (isset($item['condition'])) $item['type'] = 'condition';
             else $item['type'] = 'control';
           }
           if (!isset($item['tag'])) $item['tag'] = "$n";
@@ -383,6 +384,13 @@ function lt_print_block($block, $options = array()) {
               break;
             case 'html':
               print $item['html'];
+              break;
+            case 'condition':
+              $result = lt_condition($item['condition']);
+              if ($result[1] != LT_SHOW) {
+                if (is_string($result[1])) print $result[1];
+                return true;
+              }
               break;
             default:
               error_log("Libtables error: invalid item type '{$item['type']}' in block $block");
@@ -421,7 +429,7 @@ function lt_print_block($block, $options = array()) {
 function lt_condition($condition, $row = null) {
   if (in_array(count($condition), [ 1, 3 ])) array_push($condition, LT_HIDE);
   if (is_string($condition[0])) {
-    if (strpos($condition[0], ':') !== FALSE) { $condition[0] = lt_replace_params($condition[0]); }
+    if (strpos($condition[0], ':') !== FALSE) { $condition[0] = lt_replace_params($condition[0], TRUE); }
     if ((strpos($condition[0], '#') !== FALSE) && !$row) return $condition; // Needs to be evaluated clientside
   }
   if (count($condition) == 2) {
@@ -434,7 +442,7 @@ function lt_condition($condition, $row = null) {
     return [ FALSE, LT_HIDE ]; // Fail safe by not loading the table
   }
   if (is_string($condition[2])) {
-    if (strpos($condition[2], ':') !== FALSE) { $condition[2] = lt_replace_params($condition[2]); }
+    if (strpos($condition[2], ':') !== FALSE) { $condition[2] = lt_replace_params($condition[2], TRUE); }
     if ((strpos($condition[2], '#') !== FALSE) && !$row) return $condition; // Needs to be evaluated clientside
   }
   if (lt_condition_array($condition, $row)) return [ TRUE, LT_SHOW ];
@@ -471,9 +479,10 @@ function lt_replace_hashes($str, $row) {
   }
   return $str;
 }
-function lt_replace_params($str) {
-  return preg_replace_callback("/(^| ):([a-z_]+)/", 
-    function ($matches) {
+function lt_replace_params($str, $strict = FALSE) {
+  return preg_replace_callback("/(^| ):([a-z_]+)/",
+    function ($matches) use ($strict) {
+      if ($strict) return $matches[1] . lt_getvar($matches[2], '');
       if (lt_isvar($matches[2])) return $matches[1] . lt_getvar($matches[2]);
       return $matches[1] . $matches[2];
     },
